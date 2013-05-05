@@ -9,9 +9,9 @@
     measuring, compile it in a separate file with the relevant optimization flags, and 
     call it here - see digits.c included here for an example of how to do it. 
     Keep in mind that if your function is not doing any relevant work (for example, a 
-    malloc testing function that just allocates and frees) optimizing in compiler will 
-    likely cause the function body to be set to void - so, be careful about what optimizing 
-    flags you set for functions to be measured
+    malloc testing function that just allocates and frees), aggressive optimization 
+    passes in compiler will likely remove these calls during dead code elimination pass. 
+    So, be careful about the optimizing flags you set for functions to be measured.
 **/
 
 int main(){
