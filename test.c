@@ -19,7 +19,7 @@ int main(){
   int64_t overhead = calc_rdtsc_overhead();
   printf("Median Clock Overhead: %lld\n",overhead);
   uint64_t testDigit = 1334782398988024;
-  uint32_t TRIALS=100000; 
+  uint32_t TRIALS=1000000; 
   measure_time(Slow Digits  ,TRIALS,digits10_slow(testDigit),overhead); //default slow digits10
   measure_time(Fast Digits  ,TRIALS,digits10_fast(testDigit),overhead); //fast  digits10
   measure_time(Faster Digits,TRIALS,digits10_faster(testDigit),overhead); //faster digits10 
