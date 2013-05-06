@@ -44,6 +44,6 @@ uint32_t digits10_faster(uint64_t v) {
   return 12 + digits10_faster(v / 1000000000000);
 }
 
-uint64_t sum(uint64_t x, uint64_t y){
-  return x+y;
+uint64_t smallFunction(uint64_t x){
+  return x;
 }
