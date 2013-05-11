@@ -1,3 +1,6 @@
+//Implementation of Myer's O(ND) Longest Common Subsequence Algorithm - lcs function 
+//calculates longest common subsequence
+
 //calculate shortest edit sequence from a to b
 // Returns a dictionary whose count is shortest number of edits (insertions and deletions) to 
 // transform a to b
@@ -62,16 +65,17 @@ lcs:{[a;b;f]
       // d contains indices (x;y) of LCS - x for a, 
       // y for b. In d, there are two entries for every
       // match:
-      // a) start point of the match
-      // b) End point of the match
+      // - start point of the match
+      // - End point of the match
       // if a[1] and b[2] match and match for next 3
       // elements, two entries in d will look like below:
-      // (2,3) - indices preceding the match start
+      // (2,3) - indices for the match start - in the algorithm, there is offset of 1
       // (4,5) - indices at which last matching element for this subsequence is
-      // Notice delta x = delta y when there is a match (this is a diagonal after all) 
+      // Notice delta x = delta y when there is a match (this is a diagonal after all - 
+      // x and y will have identical delta along the diagonal) 
       // - this is the trick we use to detect matching subsequences
-      // deltas d[;0] = deltas d[;1] => where x and y deltas match
-      // deltas d[;0] > 0 => take only the matches where number of matches > 0
+      // deltas d[;0] = deltas d[;1] => where x and y deltas match - these are the diagonals if delta > 0
+      // deltas d[;0] > 0 => take only the matches where number of matches > 0 
       // til 1 + x[1;0] - x[0;0] - how many matches in x - enumerate and add it to the starting index x[0;0]
       // subtract -1 from the indices since they are off by 1
       :(-1+) each raze each flip {(1 _ x[0;0] + til 1+x[1;0]-x[0;0];1 _ x[0;1] + til 1+x[1;1]-x[0;1] )} each d (-1 0) +/: where (d1 > 0) and (d1:deltas d[;0]) = deltas d[;1];
