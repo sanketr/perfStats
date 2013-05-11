@@ -6,9 +6,8 @@
 // transform a to b
 // If the return is empty dictionary, this function is wrong - reject and investigate!
 findLCS:{[a;b;f]
-  maxv:max(0;(n:count a)+m:count b);
+  offset:maxv:(n:count a)+m:count b;
   v: (1+2*maxv)#0; //initialize array of V
-  offset: maxv;
   x:0;y:0;
   ddict:(enlist 0)!enlist v; //at most maxv entries since D in Myer's diff algorithm can't exceed maxv
   d:-1;while[maxv >= d+:1; //Constraint: when d is maxv, kmin is 0, kmax is 2*maxv => array access of v is safe since v is 1+2*maxv length
@@ -61,13 +60,13 @@ diags:{[a;b;vl]
 //get indices in a and b for longest common sequence given equality function f
 lcs:{[a;b;f] 
       d: diags[a;b;] findLCS[a;b;f];
-      //Lot of things are happening in this pipeline
+      //Lot of things are happening in this pipeline:
       // d contains indices (x;y) of LCS - x for a, 
       // y for b. In d, there are two entries for every
       // match:
       // - start point of the match
       // - End point of the match
-      // if a[1] and b[2] match and match for next 3
+      // if a[1] and b[2] match and match for consecutive 3
       // elements, two entries in d will look like below:
       // (2,3) - indices for the match start - in the algorithm, there is offset of 1
       // (4,5) - indices at which last matching element for this subsequence is
@@ -75,7 +74,7 @@ lcs:{[a;b;f]
       // x and y will have identical delta along the diagonal) 
       // - this is the trick we use to detect matching subsequences
       // deltas d[;0] = deltas d[;1] => where x and y deltas match - these are the diagonals if delta > 0
-      // deltas d[;0] > 0 => take only the matches where number of matches > 0 
+      // deltas d[;0] > 0 => take only the matches where number of matches > 0 - filter out 0-length diagonals
       // til 1 + x[1;0] - x[0;0] - how many matches in x - enumerate and add it to the starting index x[0;0]
       // subtract -1 from the indices since they are off by 1
       :(-1+) each raze each flip {(1 _ x[0;0] + til 1+x[1;0]-x[0;0];1 _ x[0;1] + til 1+x[1;1]-x[0;1] )} each d (-1 0) +/: where (d1 > 0) and (d1:deltas d[;0]) = deltas d[;1];
