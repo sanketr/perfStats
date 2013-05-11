@@ -1,6 +1,6 @@
 //Implementation of Eugene Myer's "O(ND) Difference Algorithm and Its Variations"
 //D is number of differences between two sequences - when the sequences are mostly
-//simiar, this algorithm is fast
+//similar, this algorithm is fast
 
 //Note: Call lcs function to calculate longest common subsequence
 
