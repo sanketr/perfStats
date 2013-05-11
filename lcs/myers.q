@@ -1,7 +1,7 @@
 //calculate shortest edit sequence from a to b
 // Returns a dictionary whose count is shortest number of edits (insertions and deletions) to 
 // transform a to b
-// If the return is null, this function is wrong - reject and investigate!
+// If the return is empty dictionary, this function is wrong - reject and investigate!
 ses:{[a;b;f]
   maxv:max(0;(n:count a)+m:count b);
   v: (1+2*maxv)#0; //initialize array of V
@@ -35,19 +35,18 @@ path:{[a;b;vl]
   k: -1;
   d: count vl; /number of iterations 
   //at most d diagonals - so, we need to store only that many start and end points of diagonals => 2*d elements
-  paths: (3*d) # enlist(-1;-1);
+  paths: (2*d) # enlist(-1;-1);
   while[(x>=0) and (y>=0) and -1 < d-:1;
     v: vl d;
-    idx:d*3;
+    idx:d*2;
     k: x-y; //calculate which diagonal we are on - we intialize with N-M, and backtrack to diagonal 0
-    paths[idx + 2]: (v[k + offset];v[k+offset] - k); /end point of diagonal
+    paths[idx + 1]: (v[k + offset];v[k+offset] - k); /end point of diagonal
     down: (k = neg d) or ((k < d) and (v[k+offset-1] < v[k+offset+1]));
     kprev: $[down;k+1;k-1]; /at (0,0) where there is no down, kprev is -1 => y is -1 in first entry of idx
     /0N!(d;k;kprev);
     xstart: v[kprev + offset];ystart: xstart - kprev;
     xmid: $[down;xstart;xstart+1]; ymid: xmid - k; //mid point is on the diagonal - this is starting point of the diagonal
-    paths[idx + 1]:(xmid;ymid);
-    paths[idx]:(xstart;ystart);
+    paths[idx]:(xmid;ymid);
     x: xstart;
     y: ystart;
     ];
