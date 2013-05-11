@@ -58,3 +58,15 @@ lcs:{[a;b;f]
       d: path[a;b;] ses[a;b;f];
       :(-1+) each raze each flip {(1 _ x[0;0] + til 1+ x[1;0] - x[0;0];1 _ x[0;1] + til 1+ x[1;1] - x[0;1] )} each d {-1 + x + til 2} each where (d1 > 0) and (d1:deltas d[;0]) = deltas d[;1];
   }
+
+diffTables:{[t1;t2;s;c]
+  i1: exec i from t1 where sym in s;
+  i2: exec i from t2 where sym in s;
+  a:flip (t1 i1) c;
+  b:flip (t2 i2) c;
+  il:lcs[a;b;{[x;y] all x=y}];
+  dela: (til count a) except il[0]; //return delta indices, i.e., not a common subsequence in a
+  delb: (til count b) except il[1]; //return delta indices, i.e., not a common subsequence in b
+  :(i1 dela; i2 delb) //return the delta indices in original table
+ }
+
