@@ -1,10 +1,14 @@
-//Implementation of Myer's O(ND) Longest Common Subsequence Algorithm - lcs function 
-//calculates longest common subsequence
+//Implementation of Eugene Myer's "O(ND) Difference Algorithm and Its Variations"
+//D is number of differences between two sequences - when the sequences are mostly
+//simiar, this algorithm is fast
+
+//Note: Call lcs function to calculate longest common subsequence
 
 //calculate shortest edit sequence from a to b
-// Returns a dictionary whose count is shortest number of edits (insertions and deletions) to 
-// transform a to b
-// If the return is empty dictionary, this function is wrong - reject and investigate!
+// Returns a dictionary whose count is D, shortest number of edits 
+// (insertions and deletions) to transform a to b
+
+// If the return is empty dictionary, things are very, very wrong!
 findLCS:{[a;b;f]
   offset:maxv:(n:count a)+m:count b;
   v: (1+2*maxv)#0; //initialize array of V
@@ -58,6 +62,7 @@ diags:{[a;b;vl]
   }
 
 //get indices in a and b for longest common sequence given equality function f
+//Example: lcs["ABCABA";"CABBA";=]
 lcs:{[a;b;f] 
       d: diags[a;b;] findLCS[a;b;f];
       //Lot of things are happening in this pipeline:
@@ -80,6 +85,9 @@ lcs:{[a;b;f]
       :(-1+) each raze each flip {(1 _ x[0;0] + til 1+x[1;0]-x[0;0];1 _ x[0;1] + til 1+x[1;1]-x[0;1] )} each d (-1 0) +/: where (d1 > 0) and (d1:deltas d[;0]) = deltas d[;1];
   }
 
+//Wrapper to find mutations between two tables given symbol s. c columns are used
+//for mutation check - for example, price and size columns have very good quality signal 
+//for mutation check
 diffTables:{[t1;t2;s;c]
   i1: exec i from t1 where sym in s;
   i2: exec i from t2 where sym in s;
