@@ -8,7 +8,7 @@ ses:{[a;b;f]
   offset: maxv;
   x:0;y:0;
   ddict:(enlist 0)!enlist v; //at most maxv entries since D in Myer's diff algorithm can't exceed maxv
-  d:-1;while[maxv >= d+:1; //Constraint: when d is maxv, kmin is 0, kmax is 2*maxv => array access is safe since array is 1+2*maxv length
+  d:-1;while[maxv >= d+:1; //Constraint: when d is maxv, kmin is 0, kmax is 2*maxv => array access of v is safe since v is 1+2*maxv length
           kmin:(neg d) + offset; kmax: d + offset; k:-2 + kmin;
           while[kmax >= k+:2;
             /0N!(kmin;k;v[k-1];v[k+1]);
@@ -31,7 +31,7 @@ ses:{[a;b;f]
 //Add code to calculate longest common subsequence backwards
 path:{[a;b;vl]
   x:count a; y:count b;
-  offset:max(0;x+y);
+  offset:x+y;
   k: -1;
   d: count vl; /number of iterations 
   //at most d diagonals - so, we need to store only that many start and end points of diagonals => 2*d elements
@@ -43,9 +43,8 @@ path:{[a;b;vl]
     paths[idx + 1]: (v[k + offset];v[k+offset] - k); /end point of diagonal
     down: (k = neg d) or ((k < d) and (v[k+offset-1] < v[k+offset+1]));
     kprev: $[down;k+1;k-1]; /at (0,0) where there is no down, kprev is -1 => y is -1 in first entry of idx
-    /0N!(d;k;kprev);
     xstart: v[kprev + offset];ystart: xstart - kprev;
-    xmid: $[down;xstart;xstart+1]; ymid: xmid - k; //mid point is on the diagonal - this is starting point of the diagonal
+    xmid: $[down;xstart;xstart+1]; ymid: xmid - k; //mid-point is on the diagonal - this is starting point of the diagonal
     paths[idx]:(xmid;ymid);
     x: xstart;
     y: ystart;
@@ -56,7 +55,7 @@ path:{[a;b;vl]
 //get indices in a and b for longest common sequence given equality function f
 lcs:{[a;b;f] 
       d: path[a;b;] ses[a;b;f];
-      :(-1+) each raze each flip {(1 _ x[0;0] + til 1+ x[1;0] - x[0;0];1 _ x[0;1] + til 1+ x[1;1] - x[0;1] )} each d {-1 + x + til 2} each where (d1 > 0) and (d1:deltas d[;0]) = deltas d[;1];
+      :(-1+) each raze each flip {(1 _ x[0;0] + til 1+x[1;0]-x[0;0];1 _ x[0;1] + til 1+x[1;1]-x[0;1] )} each d (-1 0) +/: where (d1 > 0) and (d1:deltas d[;0]) = deltas d[;1];
   }
 
 diffTables:{[t1;t2;s;c]
@@ -69,4 +68,3 @@ diffTables:{[t1;t2;s;c]
   delb: (til count b) except il[1]; //return delta indices, i.e., not a common subsequence in b
   :(i1 dela; i2 delb) //return the delta indices in original table
  }
-
