@@ -5,10 +5,10 @@
 //Note: Call lcs function to calculate longest common subsequence
 
 //calculate shortest edit sequence from a to b
-// Returns a dictionary whose count is D, shortest number of edits 
+// Returns a list whose count is D, shortest number of edits 
 // (insertions and deletions) to transform a to b
 
-// If the return is empty dictionary, things are very, very wrong!
+// If the return is empty list, things are very, very wrong!
 findLCS:{[a;b;f]
   offset:maxv:(n:count a)+m:count b;
   v: (1+2*maxv)#0; //initialize array of V
@@ -31,13 +31,13 @@ findLCS:{[a;b;f]
     :() //shouldn't ever get here - it is a logical bug if it gets here
   }
 
-//Function to calculate longest common subsequence backwards: as proven in Myer's O(ND) paper
-// to find the LCS, it suffices to start on diagonal (n-m) and shortest edit distance d, 
-// and traverse backwards (basically, inverse of path building, but with only one particular
-// path traversed back - that path has only one unique way of reaching back to diagonal 0
-// (remember diagonal k=x-y=0-0=0 at origin). All the diagonals in the path are matches
-// and their indices in a and b provide us indices of respective longest common subsequence
-// Horizontal and vertical paths are deltas
+//Function to calculate longest common subsequence backwards: as proven in Myer's O(ND)
+// paper to find the LCS, it suffices to start on diagonal (n-m) and shortest edit 
+//distance d, and traverse backwards (basically, inverse of path building, but with 
+//only one particular path traversed back - that path has only one unique way of reaching 
+//back to diagonal 0(remember diagonal k=x-y=0-0=0 at origin). All the diagonals in the
+//path are matches and their indices in a and b provide us indices of respective longest 
+//common subsequence. Horizontal and vertical paths are deltas
 diags:{[a;b;vl]
   x:count a; y:count b;
   offset:x+y;
@@ -66,7 +66,7 @@ diags:{[a;b;vl]
 lcs:{[a;b;f] 
       d: diags[a;b;] findLCS[a;b;f];
       //Lot of things are happening in this pipeline:
-      // d contains indices (x;y) of LCS - x for a, 
+      // d contains indices (x;y) of LCS - index x for a, 
       // y for b. In d, there are two entries for every
       // match:
       // - start point of the match
