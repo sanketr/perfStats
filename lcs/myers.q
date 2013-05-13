@@ -13,7 +13,7 @@ findLCS:{[a;b;f]
   offset:maxv:(n:count a)+m:count b;
   v: (1+2*maxv)#0; //initialize array of V
   x:0;y:0;
-  ddict:(enlist 0)!enlist v; //at most maxv entries since D in Myer's diff algorithm can't exceed maxv
+  darr:(); //at most maxv entries since D in Myer's diff algorithm can't exceed maxv
   d:-1;while[maxv >= d+:1; //Constraint: when d is maxv, kmin is 0, kmax is 2*maxv => array access of v is safe since v is 1+2*maxv length
           kmin:(neg d) + offset; kmax: d + offset; k:-2 + kmin;
           while[kmax >= k+:2;
@@ -24,11 +24,11 @@ findLCS:{[a;b;f]
             //now find matches for a[x:] and b[y:]
             while[(x<n) and (y<m) and f[a[x];b[y]];x+:1;y+:1]; //f is boolean function on a[i],b[j]
             v[k]:x;
-            if[(x >= n) and (y >= m);:ddict,:(enlist d)!enlist v];
+            if[(x >= n) and (y >= m);:darr,:enlist v];
             ];
-          ddict,:(enlist d)!enlist v; //save V after each d - we will use it to build longest common subsequence
+          darr,:enlist v; //save V after each d - we will use it to build longest common subsequence
         ];
-    :(()!()) //shouldn't ever get here - it is a logical bug if it gets here
+    :() //shouldn't ever get here - it is a logical bug if it gets here
   }
 
 //Function to calculate longest common subsequence backwards: as proven in Myer's O(ND) paper
