@@ -8,7 +8,7 @@ ses:{[a;b;f]
       fp:(m+n+3)#(-1);p:-1;
       pdict:(); /array of fp values indexed on p
       snakef:snake[;;;;;;f];
-      while[fp[delta+offset] < n-1;
+      while[fp[delta+offset] < n;
         p+:1;
         ct:delta+p; k:neg p; do[ct; fp[k+offset]:snakef[a;b;m;n;k;max(fp[k+offset-1]+1;fp[k+offset+1])];k+:1];
         ct:p;k:delta+p;do[ct;fp[k+offset]:snakef[a;b;m;n;k;max(fp[k+offset-1]+1;fp[k+offset+1])];k-:1];
@@ -24,8 +24,10 @@ ses:{[a;b;f]
 //Note: index x in the function corresponds to position x+1 in the figure 1 of paper - 
 //so (3,2) is (4,3) in the paper
 snake:{[a;b;m;n;k;y;f]
-  xp:x:(yp:y)-k; while[(x<m) and (y<n) and f[a[x+1];b[y+1]]; x+:1; y+:1];
-  if[y=n;y:y-1];0N!(xp;yp;x;y);y}
+  xp:x:(yp:y)-k; 
+  while[(x<m) and (y<n) and f[a[x];b[y]]; x+:1; y+:1];
+  0N!(xp;yp;x;y);y}
 
 backsnake:{[a;b;m;n;k;y;f]
-    x:y-k; while[(0<x) and (0<y) and f[a[x];b[y]];x-:1;y-:1;0N!(x;y)];if[y>0;y+:1];:y}
+    x:(y:y-1)-k; 
+    while[f[a[x];b[y]] and (0<x) and (0<y);0N!(x;y);x-:1;y-:1];:y+1}
