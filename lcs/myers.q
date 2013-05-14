@@ -85,15 +85,34 @@ lcs:{[a;b;f]
       :(-1+) each raze each flip {(1 _ x[0;0] + til 1+x[1;0]-x[0;0];1 _ x[0;1] + til 1+x[1;1]-x[0;1] )} each d (-1 0) +/: where (d1 > 0) and (d1:deltas d[;0]) = deltas d[;1];
   }
 
-//Wrapper to find mutations between two tables given symbol s. c columns are used
+//Optimized version of lcs function - chops off common suffix and prefix before running
+//LCS algorithm
+lcsopt:{[a;b;f] 
+  //find common prefix and common suffixes first - this is an optimization to reduce 
+  //time for LCS - you may discard this if you prefer simplicity
+  psl:{[x;y;f] pi: where not f'[x;(count x)#y]; pl: (count x)^first pi;c1:neg (count x)-   pl; si: where not f'[c1#x;c1#y]; sl: (neg c1)-0^1 + last si;(pl;sl)} . $[(count a)>count b; (b;a;f);(a;b;f)];
+  a1: (neg psl[1]) _ psl[0] _ a; /chop off common prefixes and suffixes
+  b1: (neg psl[1]) _ psl[0] _ b;
+  //if a1 or b1 is empty after prefix/suffix chop-off,  the empty one is subsequence
+  //of other. The non-empty one is delta.
+  //lcs is prefix+suffix - return - don't call findLCS as it works only on non-empty
+  //sequences
+  $[(0=count a1) or 0=(count b1);:({[p;s;x] (p#x),(neg s)#x}[psl[0];psl[1];] each (til count a;til count b));
+    d: diags[a1;b1;] findLCS[a1;b1;f]];
+ idx :((psl[0]-1)+) each raze each flip {(1 _ x[0;0] + til 1+x[1;0]-x[0;0];1 _ x[0;1] + til 1+x[1;1]-x[0;1] )} each d (-1 0) +/: where (d1 > 0) and (d1:deltas d[;0]) = deltas d[;1]; 
+ :((pi, (first idx),((neg psl[1])+count a) + si);((pi:til psl[0]), (last idx),((neg psl[1])+count b) + si:til psl[1]));
+  }
+  
+//Wrapper to find mutations between two tables given s in sym column. c columns are used
 //for mutation check - for example, price and size columns have very good quality signal 
-//for mutation check
+//for trade mutation check
+//Example: diffTables[t1;t2;`ABC;`price`size]
 diffTables:{[t1;t2;s;c]
   i1: exec i from t1 where sym in s;
   i2: exec i from t2 where sym in s;
   a:flip (t1 i1) c;
   b:flip (t2 i2) c;
-  il:lcs[a;b;{[x;y] all x=y}];
+  il:lcsopt[a;b;{[x;y] all x=y}]; /replace with call to lcs instead if not optimizing
   dela: (til count a) except il[0]; //return delta indices, i.e., not a common subsequence in a
   delb: (til count b) except il[1]; //return delta indices, i.e., not a common subsequence in b
   :(i1 dela; i2 delb) //return the delta indices in original table
