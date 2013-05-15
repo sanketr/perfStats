@@ -1,22 +1,21 @@
 //Implementation of "An O(NP) Sequence Comparison Algorithm" 
-//by Sun Wu, Udi Manber, Gene Myers and Web Miller
+//by Sun Wu, Udi Manber, Gene Myers and Web Miller.
 //Note: P=(D-(M-N))/2, D is shortest edit distance, M>=N
 
+//In Miller-Myer diff algorithm, m>n - so, flip arguments if this is not the case
 lcs:{[a;b;f] $[flipped;{(x[1];x[0])};(::)] $[flipped:(count a)>count b;lcsh[b;a;f];lcsh[a;b;f]]}
 
 lcsh:{[a;b;f]
-      n:count b;m:count a; delta:n-m; offset:m+1;
+      n:count a;m:count b;delta:m-n; offset:n+1;
       @[`.;;:;(m+n+3)#(-1)] each `snodes`fp;p:-1; /snake nodes, further points, p value
       pdict:(); /array of fp values indexed on p
       @[`.;`snakearr;:;()]; /array of snakes. How does that sound?
       snakef:snakes[;;;f;];
-      while[fp[delta+offset] < n;
+      while[fp[delta+offset] < m;
         p+:1;
-        ct:delta+p; k:neg p; 
-        snakef[a;b;k;ct];
-        ct:p;k:delta+p;
-        snakef[a;b;k;ct];
-        snakef[a;b;delta;1];
+        ct:delta+p; k:neg p; snakef[a;b;k;ct]; /vertical traversal
+        ct:p;k:delta+p; snakef[a;b;k;ct]; /horizontal traversal
+        snakef[a;b;delta;1]; /find furthest point in delta diagonal
         pdict,:enlist fp;
        ];
     @[`.;`paths;:;()];
@@ -28,18 +27,19 @@ lcsh:{[a;b;f]
     :(raze idx[;0];raze idx[;1]);
   }
  
-//snake are like snake in snake-and-ladders board. To get from top of the board
-//to bottom of the board in shortest path, you need longest sequence of diagonals. 
-//Hence, the term snake used by Myers et al
+//Snakes are as in snakes-and-ladders board game. To get from top of the board
+//to bottom of the board in shortest path, you need longest sequence of diagonals.
+//Every match here is marked with a diagonal path. Hence, the term snake used by 
+//Myers et al, I guess.
 //Note: index x in the function corresponds to position x+1 in the figure 1 of paper - 
 //so (3,2) is (4,3) in the paper
 snakes:{[a;b;k;f;ct]
-  m:count a;n:count b;offset:m+1;
-  vert:$[k <(n-m);1b;0b]; /if below diagonal, vertical else horizontal
+  n:count a;m:count b;offset:n+1;
+  vert:$[k <(m-n);1b;0b]; /if below diagonal, vertical else horizontal
   do[ct;
     $[(fp[k+offset-1]+1)>fp(k+offset+1);[kp:k+offset-1;yp:fp[kp]+1];[kp:k+offset+1;yp:fp[kp]]];
     xp:x:(y:yp)-k; 
-    while[(x<m) and (y<n) and f[a[x];b[y]]; x+:1; y+:1];
+    while[(x<n) and (y<m) and f[a[x];b[y]]; x+:1; y+:1];
     fp[k+offset]::y;
     @[`.;`snakearr;,;enlist (snodes[kp];xp;yp;(y-yp))];
     snodes[k+offset]:: -1 + count snakearr;
