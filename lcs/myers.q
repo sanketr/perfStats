@@ -31,6 +31,40 @@ findLCS:{[a;b;f]
     :() //shouldn't ever get here - it is a logical bug if it gets here
   }
 
+lcs2:{[a;b;f]
+      snakearr: snakes[a;b;f];
+      @[`.;`paths;:;()];
+      {[d;i] if[d[i][3]>0;@[`.;`paths;,;enlist (d[i][1];d[i][2];d[i][3])]]; d[i][0]}[snakearr;]/[-1<;-1+ count snakearr];
+      idx: { (x[0]+i;x[1]+i:til x[2])} each reverse paths;
+      ![`.;();0b;enlist `paths];
+      :(raze idx[;0];raze idx[;1]);}
+
+snakes:{[a;b;f]
+  offset:maxv:(n:count a)+m:count b;
+  v: (1+2*maxv)#0; //initialize array of V
+  x:0;y:0;
+  snodes:(1+2*maxv)#-1; //at most maxv entries since D in Myer's diff algorithm can't exceed maxv
+  snakearr:(); /array of snakes
+  d:-1;while[maxv >= d+:1; //Constraint: when d is maxv, kmin is 0, kmax is 2*maxv => array access of v is safe since v is 1+2*maxv length
+          kmin:(neg d) + offset; kmax: d + offset; k:-2 + kmin;
+          while[kmax >= k+:2;
+            $[(k = kmin) or ((k < kmax) and v[-1+k] < v[k+1]);
+                x: v[kp:k+1];
+                x: 1 + v[kp:-1+k]];
+            yp:y:(xp:x)-(k - offset); //note "original diagonal k" is always (k - offset) because of array offsets here - to calculate y, we need original diagonal k
+            //now find matches for a[x:] and b[y:]
+            while[(x<n) and (y<m) and f[a[x];b[y]];x+:1;y+:1]; //f is boolean function on a[i],b[j]
+            v[k]:x;
+            if[(x >= n) and (y >= m);:snakearr,:enlist (snodes[kp];xp;yp;(y-yp))];
+            snakearr,:enlist (snodes[kp];xp;yp;(y-yp)); 
+            snodes[k]:-1 + count snakearr;
+            ];
+          
+        ];
+    :() //shouldn't ever get here - it is a logical bug if it gets here
+  }
+
+
 //Function to calculate longest common subsequence backwards: as proven in Myer's O(ND)
 // paper to find the LCS, it suffices to start on diagonal (n-m) and shortest edit 
 //distance d, and traverse backwards (basically, inverse of path building, but with 
