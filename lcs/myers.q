@@ -39,13 +39,18 @@ lcs2:{[a;b;f]
       ![`.;();0b;enlist `paths];
       :(raze idx[;0];raze idx[;1]);}
 
+//calculate shortest edit sequence from a to b
+// Returns a list of snakes
+
+// If the return is empty list, things are very, very wrong!
 snakes:{[a;b;f]
   offset:maxv:(n:count a)+m:count b;
   v: (1+2*maxv)#0; //initialize array of V
   x:0;y:0;
-  snodes:(1+2*maxv)#-1; //at most maxv entries since D in Myer's diff algorithm can't exceed maxv
-  snakearr:(); /array of snakes
-  d:-1;while[maxv >= d+:1; //Constraint: when d is maxv, kmin is 0, kmax is 2*maxv => array access of v is safe since v is 1+2*maxv length
+  snodes:(1+2*maxv)#-1; 
+  snakearr:(); /array of snakes - at most maxv entries since D in Myer's diff algorithm can't exceed maxv
+  d:-1;
+  while[maxv >= d+:1; //Constraint: when d is maxv, kmin is 0, kmax is 2*maxv => array access of v is safe since v is 1+2*maxv length
           kmin:(neg d) + offset; kmax: d + offset; k:-2 + kmin;
           while[kmax >= k+:2;
             $[(k = kmin) or ((k < kmax) and v[-1+k] < v[k+1]);
@@ -59,7 +64,6 @@ snakes:{[a;b;f]
             snakearr,:enlist (snodes[kp];xp;yp;(y-yp)); 
             snodes[k]:-1 + count snakearr;
             ];
-          
         ];
     :() //shouldn't ever get here - it is a logical bug if it gets here
   }

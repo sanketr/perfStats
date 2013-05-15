@@ -49,7 +49,7 @@ snakes:{[a;b;k;f;ct]
 //Wrapper to find mutations between two tables given s in sym column. c columns are used
 //for mutation check - for example, price and size columns have very good quality signal
 //for trade mutation check
-//Example: diffTables[t1;t2;`ABC;`price`size]
+//Example: diffTables[t1;t2;`ABC;`price`size] - returns indices in t1 and t2 which differ
 diffTables:{[t1;t2;s;c]
   i1: exec i from t1 where sym in s;
   i2: exec i from t2 where sym in s;
