@@ -5,28 +5,43 @@
 //In Miller-Myer diff algorithm, m>n - so, flip arguments if this is not the case
 lcs:{[a;b;f] $[flipped;{(x[1];x[0])};(::)] $[flipped:(count a)>count b;lcsh[b;a;f];lcsh[a;b;f]]}
 
-lcsh:{[a;b;f]
-      n:count a;m:count b;delta:m-n; offset:n+1;
-      @[`.;;:;(m+n+3)#(-1)] each `snodes`fp;p:-1; /snake nodes, further points, p value
-      pdict:(); /array of fp values indexed on p
-      @[`.;`snakearr;:;()]; /array of snakes. How does that sound?
-      snakef:snakes[;;;f;];
-      while[fp[delta+offset] < m;
-        p+:1;
-        ct:delta+p; k:neg p; snakef[a;b;k;ct]; /vertical traversal
-        ct:p;k:delta+p; snakef[a;b;k;ct]; /horizontal traversal
-        snakef[a;b;delta;1]; /find furthest point in delta diagonal
-        pdict,:enlist fp;
-       ];
-    @[`.;`paths;:;()];
-    //iterate backwards starting from last snake on delta (i.e., destination (n,m)) and work backwards to (0,0) where 
-    //snode is -1. So, condition for iterate is set to check for snode value
-    {[d;i] if[d[i][3]>0;@[`.;`paths;,;enlist (d[i][1];d[i][2];d[i][3])]]; d[i][0]}[snakearr;]/[-1<;-1+ count snakearr];
-    idx: { (x[0]+i;x[1]+i:til x[2])} each reverse paths;
-    ![`.;();0b;`fp`snodes`snakearr`paths]; /delete the global arrays
-    :(raze idx[;0];raze idx[;1]);
+//Optimized version of lcs function - chops off common suffix and prefix before running
+//LCS algorithm - helps in case of long prefix/suffix overlap
+lcsopt:{[a;b;f]
+  //find common prefix and common suffixes first - this is an optimization to reduce
+  //time for LCS - you may discard this if you prefer simplicity
+  psl:{[x;y;f] pi: where not f'[x;(count x)#y]; pl: (count x)^first pi;c1:neg (count x)-   pl; si: where not f'[c1#x;c1#y]; sl: (neg c1)-0^1 +    last si;(pl;sl)} . $[(count a)>count b; (b;a;f);(a;b;f)];
+  a1: (neg psl[1]) _ psl[0] _ a; /chop off common prefixes and suffixes
+  b1: (neg psl[1]) _ psl[0] _ b;
+  //if a1 or b1 is empty after prefix/suffix chop-off,  the empty one is subsequence
+  //of other. The non-empty one is delta. So, lcs is prefix+suffix - return - don't
+  //call lcs function as it works only on non-empty sequences
+  $[(0=count a1) or 0=(count b1);:({[p;s;x] (p#x),(neg s)#x}[psl[0];psl[1];] each (til count a;til count b));
+    idx:psl[0]+lcs[a1;b1;f]]; /offset the indices by length of chopped prefix
+  :((pi, (first idx),((neg psl[1])+count a) + si);((pi:til psl[0]), (last idx),((neg psl[1])+count b) + si:til psl[1]));
   }
- 
+
+
+lcsh:{[a;b;f]
+  n:count a;m:count b;delta:m-n; offset:n+1;
+  @[`.;;:;(m+n+3)#(-1)] each `snodes`fp;p:-1; /snake nodes, further points, p value
+  @[`.;`snakearr;:;()]; /array of snakes. How does that sound?
+  snakef:snakes[;;;f;];
+  while[fp[delta+offset] < m;
+    p+:1;
+    ct:delta+p; k:neg p; snakef[a;b;k;ct]; /vertical traversal
+    ct:p;k:delta+p; snakef[a;b;k;ct]; /horizontal traversal
+    snakef[a;b;delta;1]; /find furthest point in delta diagonal
+    ];
+  @[`.;`paths;:;()];
+  //iterate backwards starting from last snake on delta (i.e., destination (n,m)) and work backwards to (0,0) where 
+  //snode is -1. So, condition for iterate is set to check for snode value
+  {[d;i] if[d[i][3]>0;@[`.;`paths;,;enlist (d[i][1];d[i][2];d[i][3])]]; d[i][0]}[snakearr;]/[-1<;-1+ count snakearr];
+  idx: { (x[0]+i;x[1]+i:til x[2])} each reverse paths;
+  ![`.;();0b;`fp`snodes`snakearr`paths]; /delete the global arrays
+  :(raze idx[;0];raze idx[;1]);
+  }
+
 //Snakes are as in snakes-and-ladders board game. To get from top of the board
 //to bottom of the board in shortest path, you need longest sequence of diagonals.
 //Every match here is marked with a diagonal path. Hence, the term snake used by 
@@ -55,9 +70,8 @@ diffTables:{[t1;t2;s;c]
   i2: exec i from t2 where sym in s;
   a:flip (t1 i1) c;
   b:flip (t2 i2) c;
-  il:lcs[a;b;{[x;y] all x=y}]; /replace with call to lcs instead if not optimizing
+  il:lcs[a;b;{[x;y] all x=y}]; /replace with call to lcsopt instead if optimizing for big tables with long common prefix/suffixes
   dela: (til count a) except il[0]; //return delta indices, i.e., not a common subsequence  in a
   delb: (til count b) except il[1]; //return delta indices, i.e., not a common subsequence  in b
   :(i1 dela; i2 delb) //return the delta indices in original table
- }
-
+  }
