@@ -39,8 +39,8 @@ lcs2:{[a;b;f]
       ![`.;();0b;enlist `paths];
       :(raze idx[;0];raze idx[;1]);}
 
-//calculate shortest edit sequence from a to b
-// Returns a list of snakes
+//Calculate shortest edit sequence from a to b
+//Returns a list of snakes
 
 // If the return is empty list, things are very, very wrong!
 snakes:{[a;b;f]
