@@ -2,7 +2,14 @@
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 uint64_t calc_rdtsc_overhead();
+
+#ifdef __cplusplus
+}
+#endif
  
 inline unsigned long long __attribute__((always_inline)) rdtsc64() {
   unsigned int hi, lo;
@@ -40,7 +47,7 @@ SORT_INIT(long, int64_t, uint64_t);
   do{ \
     int64_t median, min, max, start, end; \
     double mean, sd, out1, out2; \
-    int64_t* times = calloc(TRIALS, sizeof(int64_t)); \
+    int64_t* times = (int64_t*) calloc(TRIALS, sizeof(int64_t)); \
     for(int64_t i=0; i < TRIALS; i++){ \
       start = rdtsc64(); \
       FUNCTION; \

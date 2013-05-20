@@ -4,10 +4,10 @@
  
 uint64_t calc_rdtsc_overhead() {
   uint32_t TRIALS = 1000000;
-  uint64_t* times = calloc(TRIALS,sizeof(uint64_t));
+  uint64_t* times = (uint64_t*) calloc(TRIALS,sizeof(uint64_t));
  
   uint64_t start=0, end=0;
-  for(int i = 0; i < TRIALS; i++){
+  for(uint32_t i = 0; i < TRIALS; i++){
     start = rdtsc64();
     end = rdtsc64();
     times[i] = (end -start)>0?(end - start):0;
@@ -26,3 +26,4 @@ uint64_t calc_rdtsc_overhead() {
 #endif
   return min; 
 }
+
