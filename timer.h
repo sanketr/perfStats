@@ -30,7 +30,6 @@ static len_t bin_##name (const input_t* input, len_t len, input_t key){ \
   return start; \
 }
 
-
 //declare long version of binary search function - we need it for
 //measure_time macro below
 SORT_INIT(long, int64_t, uint64_t);
@@ -56,7 +55,9 @@ SORT_INIT(long, int64_t, uint64_t);
     min = times[0]; \
     out1 = (100.0*(TRIALS - bin_long(times,TRIALS,(uint64_t)(mean + 2*sd))))/TRIALS; \
     out2 = (100.0*bin_long(times,TRIALS,(uint64_t)mean - 2*sd))/TRIALS; \
-    printf(#NAME" (Cycles)  | Median: %lld | Mean: %6.3f | Std Deviation: %6.3f | Min: %lld | Max: %lld | Upper Outliers: %6.3f%% | Lower Outliers: %6.3f%%\n",  median,mean,sd,min,max,out1,out2); \
+    printf(#NAME" (Cycles)  | \
+    Estimated: %ld | Median: %ld | Mean: %6.3f | Std Deviation: %6.3f | Max: %ld | Upper Outliers: %6.3f%% | Lower Outliers: %6.3f%%\n" \
+    ,  min,median,mean,sd,max,out1,out2); \
     free(times); \
   }while(0) 
 

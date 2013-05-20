@@ -17,7 +17,7 @@
 int main(){
   //calculate median of rdtsc call overhead - we will subtract it from all the tests we do
   int64_t overhead = calc_rdtsc_overhead();
-  printf("Median Clock Measurement Overhead: %lld Cycles\n",overhead);
+  printf("Clock Measurement Overhead: %ld Cycles\n",overhead);
   uint64_t testDigit = 1334782398988024;
   uint32_t TRIALS=1000000; //measure 1M times - set it to lower value if your function is slow - the faster your function, more measurements you need - in my experiments, for fastest functions, values seem to converge within 1M iterations
   measure_time(Slow Digits  ,TRIALS,digits10_slow(testDigit),overhead); //default slow digits10
