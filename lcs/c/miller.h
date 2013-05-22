@@ -9,7 +9,7 @@ size_t len;
 typedef struct{
   void* vec;
   size_t size;
-}vectors;
+}vec;
 
 DARRAY(int4v,snakes);
 

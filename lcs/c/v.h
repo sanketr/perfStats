@@ -10,7 +10,7 @@ typedef struct {\
   size_t cap;\
 } name;\
 \
-size_t CONCAT(name,initv)(name *v, size_t size){\
+size_t CONCAT(name,init)(name *v, size_t size){\
   v->size = 0;\
   v->cap = 0;\
   v->arr = (type*) malloc(size*(sizeof(type)));\
@@ -19,7 +19,7 @@ size_t CONCAT(name,initv)(name *v, size_t size){\
   return size;\
 }\
 \
-void CONCAT(name,insertv)(name *v, type e){\
+void CONCAT(name,insert)(name *v, type e){\
   if(v->arr == NULL) return;\
   if(v->size == v->cap){\
     v->cap *= SCALING;\
@@ -42,7 +42,7 @@ int inline CONCAT(name,cap)(name *v){\
   else return v->cap;\
 }\
 \
-void CONCAT(name,freev)(name *v){\
+void CONCAT(name,free)(name *v){\
   v->size=0;\
   v->cap=0;\
   free(v->arr);\
