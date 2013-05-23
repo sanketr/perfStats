@@ -9,8 +9,10 @@ size_t len;
 } snakes;
 
 typedef struct{
-  void* vec;
   size_t size;
+  size_t stride;
+  char type;
+  void* vec;
 }vec;
 
 DARRAY(int4v,snakes);
