@@ -1,20 +1,14 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>  
 #include "miller.h"
 
-//TODO: Must be thread-safe - no global variables
+//Thread-safe - no global, or local static variables
 
-static size_t* til(size_t num) { size_t* idx = malloc(num*(sizeof(size_t))); DO(num,idx[i]=i); return idx;}
+void vecfree(vec v){ free(v.vec); v.vec=NULL; v.size=0; return;}
 
-static void inline __attribute__((always_inline)) inssnakes(int4v* a,const size_t p, const size_t x, const size_t y, const size_t l){
-  int4vinsert(a,(snakes){p,x,y,l});
-}
-
-static void inline __attribute__((always_inline)) insertTest(int4v* a, const size_t count){
-  size_t i=0;
-  for(;i<count;i++){inssnakes(a,i,i+1,i+2,i+3);}
-}
-
-size_t inline __attribute__((always_inline)) charcomp(vec a,vec b,size_t i,size_t j){
+size_t chrcmp(vec a,vec b,size_t i,size_t j){
   size_t i1=i;
   char* a1 = (char*)a.vec;
   char* b1 = (char*)b.vec;
@@ -23,9 +17,10 @@ size_t inline __attribute__((always_inline)) charcomp(vec a,vec b,size_t i,size_
 }
 
 //Note: fp, snodes are constant of size m+n+3
-void inline __attribute__((always_inline)) fsnakes(vec a,vec b,int4v* snakearr, size_t* fp,size_t* snodes, size_t k,size_t (*cmp)(vec,vec,size_t,size_t),size_t ct){
+void inline __attribute__((always_inline)) fsnakes(const vec a,const vec b,int4v* snakearr, int64_t* fp,int64_t* snodes, size_t k,size_t (*cmp)(vec,vec,size_t,size_t),size_t ct){
   size_t n = a.size, m = b.size, offset = n+1;
-  size_t kp,xp,yp,x,y;
+  size_t kp;
+  int64_t xp,yp,x,y;
   bool vert = k < (m-n) ? 1:0; //vertical if below diagonal, horizontal otherwise
   for(;0<ct;ct--){
     if(fp[k+offset-1] + 1 > fp[k+offset+1]){
@@ -40,81 +35,73 @@ void inline __attribute__((always_inline)) fsnakes(vec a,vec b,int4v* snakearr, 
     x += cmp(a,b,x,y);
     y += x-xp; //x-xp=cmp(a,b,x,y)
     fp[k+offset] = y;
-    int4vinsert(snakearr,(snakes){snodes[kp],xp,yp,(x-xp)});
+    int4vinsert(snakearr,(snakes){snodes[kp],xp,yp,(size_t)(x-xp)});
     snodes[k+offset] = -1 + snakearr->size;
     if(vert) k+=1;
     else k-=1; 
   }
 }
 
-static vec* lcsh(vec a, vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
-  size_t n = a.size, m = b.size, delta = m-n, offset = n+1, p=-1 ,ct=0, k=0;
-  size_t* snodes = malloc((m+n+3)*sizeof(size_t)); 
-  size_t* fp = malloc((m+n+3)*sizeof(size_t)); 
+static inline vec* lcsh(const vec a,const vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
+  size_t n = a.size, m = b.size, delta = m-n, offset = n+1;
+  assert(m >= n); //delta must be positive - otherwise result is bad
+  int64_t p=-1, ct=0, k=0;
+  int64_t* snodes = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
+  int64_t* fp = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
   for(int i=0;i<m+n+3;i++){ snodes[i]=-1;fp[i]=-1;}
-  int4v* snakearr;
-  int4vinit(snakearr,(m+n+1)); 
-  while(fp[delta+offset] < m){
+  int4v snakearr;
+  int4vinit(&snakearr,(m+n+1)); 
+  while(fp[delta+offset] < (int64_t)m){
     p += 1;
     ct = delta+p; k = -1*p;
-    fsnakes(a,b,snakearr,fp,snodes,k,cmp,ct);
+    fsnakes(a,b,&snakearr,fp,snodes,k,cmp,ct);
     ct = p; k = delta+p;
-    fsnakes(a,b,snakearr,fp,snodes,k,cmp,ct);
-    fsnakes(a,b,snakearr,fp,snodes,delta,cmp,1);
+    fsnakes(a,b,&snakearr,fp,snodes,k,cmp,ct);
+    fsnakes(a,b,&snakearr,fp,snodes,delta,cmp,1);
   }
-  //TODO: iterate through snakes, and fill in paths int2v vector
-
+  //length of LCS is n-p - so, need only those many indices
+  size_t* ax = malloc((n-p)*sizeof(size_t));
+  size_t* by = malloc((n-p)*sizeof(size_t));
+  size_t i = -1 + snakearr.size;
+  size_t j = n-p-1;
+  snakes* snakesv = snakearr.arr;
+  while(snakesv[i].p > -1){
+    if(snakesv[i].len > 0){
+      //insert into x,y size_t arrays corresponding to a and b
+      //insert backwards, starting from end of the arrays
+      for(size_t k=0; k < snakesv[i].len; k++){
+        ax[k+j-snakesv[i].len+1] = snakesv[i].x + k;
+        by[k+j-snakesv[i].len+1] = snakesv[i].y + k;
+        }
+      j -= snakesv[i].len;
+    }
+    //set i to index of previous node in snake array
+    i=snakesv[i].p;
+  }
+  vec* res=malloc(2*sizeof(vec));
+  res[0].size = res[1].size = n-p;
+  res[0].vec = ax;
+  res[1].vec = by;
   free(fp); free(snodes);
-  int4vfree(snakearr);
-  return NULL;
+  int4vfree(&snakearr);
+  return res;
 } 
 
-
-//flip a nested vector of vectors - size 2 
-static void inline __attribute__((always_inline)) flip(void** vec){
-    void* tmp;
-    if(vec == NULL) return;
-    else{
-      tmp=*(vec+1);
-      *(vec+1)=*(vec+0);
-      *(vec+0)=tmp;
-    }
+//flip a nested vector of vectors - works only for size 2 
+static void inline __attribute__((always_inline)) flip(vec* vect){
+  vec tmp;
+  if(vect == NULL) return;
+  else{
+    tmp=vect[1];
+    vect[1]=vect[0];
+    vect[0]=tmp;
+  }
 }
 
-vec* lcs(vec a, vec b, size_t  (*cmp)(vec,vec,size_t,size_t)){
+vec* lcs(const vec a,const vec b, size_t  (*cmp)(vec,vec,size_t,size_t)){
   bool flipped = a.size > b.size ? 1:0;
   vec* res;
-  if(flipped) res=lcsh(b,a,cmp);
+  if(flipped){res=lcsh(b,a,cmp);flip(res);}
   else res=lcsh(a,b,cmp); 
-  if(flipped) flip((void**)&res);
   return res; 
-}
-
-//TODO: Generic vector wrapper for a,b, function ptr f, size_t k,ct
-/**
-void inline __attribute__((always_inline)) fsnakes(const a,const b,const k,f,const ct){
-  
-
-
-}
-**/
-
-/** 
-   Takes a,b, function ptr f, returns indices in a and b for common lcs
-** index lcs(a,b,f) 
-
-**/
-
-int main(int argc, char** argv){
-
-  int4v a;
-  int4vinit(&a, 16);
-  printf("Capacity of array: %d\n", a.cap);
-  size_t i=0;
-  insertTest(&a, 22);
-  for(i=0;i<a.size;i++) printf("Array element %d -> %d\n", i, a.arr[i].len);
-  printf("Capacity of array: %d\n", a.cap);
-  int4vfree(&a);
-  printf("Capacity of array after deleting: %d\n", a.cap);
-  return 0;
 }

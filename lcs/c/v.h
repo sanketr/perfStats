@@ -5,9 +5,9 @@
 #define CONCAT(x,y) x ## y
 #define DARRAY(name, type)\
 typedef struct {\
-  type* arr;\
   size_t size;\
   size_t cap;\
+  type* arr;\
 } name;\
 \
 size_t CONCAT(name,init)(name *v, size_t size){\
@@ -46,4 +46,5 @@ void CONCAT(name,free)(name *v){\
   v->size=0;\
   v->cap=0;\
   free(v->arr);\
+  v->arr=NULL;\
 }

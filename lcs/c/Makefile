@@ -9,7 +9,9 @@ all: install
  
 install:
 	gcc -O2 v.c -c -Wall
-	gcc -O2 miller.c -std=c99 -Wall -o lcs -g
+	gcc -O3 miller.c -std=c99 -Wall -g -c -DMILLER_COMPILE
+	gcc -O2 timer.c -std=c99 -Wall -c -Wno-unused-function -g $(GCCFLAGS)
+	gcc -O1 test.c miller.o timer.o -std=c99 -Wall -o lcs -g $(GCCFLAGS) -lgsl -lgslcblas
  
 clean:
 	rm -rf *.o lcs *dSYM
