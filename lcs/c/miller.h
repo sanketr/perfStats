@@ -4,7 +4,7 @@
 #define DO(n,x) {int i=0; for (;i<n;i++) x;}
 #endif
 
-typedef enum {false, true} bool;
+typedef enum {false,true} bool;
 
 typedef struct{
 int64_t p;
@@ -24,4 +24,5 @@ DARRAY(int4v,snakes);
 #endif
 
 size_t chrcmp(vec,vec,size_t,size_t);
+size_t int32cmp(vec,vec,size_t,size_t);
 vec* lcs(vec,vec,size_t (*)(vec,vec,size_t,size_t));

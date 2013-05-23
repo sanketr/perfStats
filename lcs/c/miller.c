@@ -8,16 +8,24 @@
 
 void vecfree(vec v){ free(v.vec); v.vec=NULL; v.size=0; return;}
 
-size_t chrcmp(vec a,vec b,size_t i,size_t j){
+size_t int32cmp(const vec a,const vec b,size_t i,size_t j){
   size_t i1=i;
-  char* a1 = (char*)a.vec;
-  char* b1 = (char*)b.vec;
+  int32_t const* a1 = (int32_t const*)a.vec;
+  int32_t const* b1 = (int32_t const*)b.vec;
+  while((i<a.size) && (j<b.size) && a1[i] == b1[j]){i++;j++;}
+  return i-i1;
+}
+
+size_t chrcmp(const vec a,const vec b,size_t i,size_t j){
+  size_t i1=i;
+  char const* a1 = (char const*)a.vec;
+  char const* b1 = (char const*)b.vec;
   while((i<a.size) && (j<b.size) && a1[i] == b1[j]){i++;j++;}
   return i-i1;
 }
 
 //Note: fp, snodes are constant of size m+n+3
-void inline __attribute__((always_inline)) fsnakes(const vec a,const vec b,int4v* snakearr, int64_t* fp,int64_t* snodes, size_t k,size_t (*cmp)(vec,vec,size_t,size_t),size_t ct){
+void inline __attribute__((always_inline)) fsnakes(const vec a,const vec b,int4v* snakevec, int64_t* fp,int64_t* snodes, size_t k,size_t (*cmp)(vec,vec,size_t,size_t),size_t ct){
   size_t n = a.size, m = b.size, offset = n+1;
   size_t kp;
   int64_t xp,yp,x,y;
@@ -35,8 +43,8 @@ void inline __attribute__((always_inline)) fsnakes(const vec a,const vec b,int4v
     x += cmp(a,b,x,y);
     y += x-xp; //x-xp=cmp(a,b,x,y)
     fp[k+offset] = y;
-    int4vinsert(snakearr,(snakes){snodes[kp],xp,yp,(size_t)(x-xp)});
-    snodes[k+offset] = -1 + snakearr->size;
+    int4vinsert(snakevec,(snakes){snodes[kp],xp,yp,(size_t)(x-xp)});
+    snodes[k+offset] = -1 + snakevec->size;
     if(vert) k+=1;
     else k-=1; 
   }
@@ -49,22 +57,22 @@ static inline vec* lcsh(const vec a,const vec b,size_t (*cmp)(vec,vec,size_t,siz
   int64_t* snodes = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
   int64_t* fp = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
   for(int i=0;i<m+n+3;i++){ snodes[i]=-1;fp[i]=-1;}
-  int4v snakearr;
-  int4vinit(&snakearr,(m+n+1)); 
+  int4v snakevec;
+  int4vinit(&snakevec,(m+n+1)); 
   while(fp[delta+offset] < (int64_t)m){
     p += 1;
     ct = delta+p; k = -1*p;
-    fsnakes(a,b,&snakearr,fp,snodes,k,cmp,ct);
+    fsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
     ct = p; k = delta+p;
-    fsnakes(a,b,&snakearr,fp,snodes,k,cmp,ct);
-    fsnakes(a,b,&snakearr,fp,snodes,delta,cmp,1);
+    fsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
+    fsnakes(a,b,&snakevec,fp,snodes,delta,cmp,1);
   }
   //length of LCS is n-p - so, need only those many indices
   size_t* ax = malloc((n-p)*sizeof(size_t));
   size_t* by = malloc((n-p)*sizeof(size_t));
-  size_t i = -1 + snakearr.size;
+  size_t i = -1 + snakevec.size;
   size_t j = n-p-1;
-  snakes* snakesv = snakearr.arr;
+  snakes* snakesv = snakevec.vec;
   while(snakesv[i].p > -1){
     if(snakesv[i].len > 0){
       //insert into x,y size_t arrays corresponding to a and b
@@ -83,7 +91,7 @@ static inline vec* lcsh(const vec a,const vec b,size_t (*cmp)(vec,vec,size_t,siz
   res[0].vec = ax;
   res[1].vec = by;
   free(fp); free(snodes);
-  int4vfree(&snakearr);
+  int4vfree(&snakevec);
   return res;
 } 
 
@@ -101,7 +109,9 @@ static void inline __attribute__((always_inline)) flip(vec* vect){
 vec* lcs(const vec a,const vec b, size_t  (*cmp)(vec,vec,size_t,size_t)){
   bool flipped = a.size > b.size ? 1:0;
   vec* res;
-  if(flipped){res=lcsh(b,a,cmp);flip(res);}
+  if(flipped){
+    res=lcsh(b,a,cmp);flip(res);
+   }
   else res=lcsh(a,b,cmp); 
   return res; 
 }

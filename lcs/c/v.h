@@ -7,44 +7,44 @@
 typedef struct {\
   size_t size;\
   size_t cap;\
-  type* arr;\
+  type* vec;\
 } name;\
 \
 size_t CONCAT(name,init)(name *v, size_t size){\
   v->size = 0;\
   v->cap = 0;\
-  v->arr = (type*) malloc(size*(sizeof(type)));\
-  if( v->arr == NULL) return 0;\
+  v->vec = (type*) malloc(size*(sizeof(type)));\
+  if( v->vec == NULL) return 0;\
   v->cap = size;\
   return size;\
 }\
 \
 void CONCAT(name,insert)(name *v, type e){\
-  if(v->arr == NULL) return;\
+  if(v->vec == NULL) return;\
   if(v->size == v->cap){\
     v->cap *= SCALING;\
-    v->arr = (type*) realloc(v->arr, v->cap * sizeof(type));\
-    if(v->arr == NULL){\
+    v->vec = (type*) realloc(v->vec, v->cap * sizeof(type));\
+    if(v->vec == NULL){\
       v->size=0;\
       v->cap=0;\
       }\
   }\
-  v->arr[v->size++] = e;\
+  v->vec[v->size++] = e;\
 }\
 \
 int inline CONCAT(name,size)(name *v) {\
-  if(v->arr == NULL) return 0;\
+  if(v->vec == NULL) return 0;\
   else return v->size;\
 }\
 \
 int inline CONCAT(name,cap)(name *v){\
-  if(v->arr == NULL) return 0;\
+  if(v->vec == NULL) return 0;\
   else return v->cap;\
 }\
 \
 void CONCAT(name,free)(name *v){\
   v->size=0;\
   v->cap=0;\
-  free(v->arr);\
-  v->arr=NULL;\
+  free(v->vec);\
+  v->vec=NULL;\
 }
