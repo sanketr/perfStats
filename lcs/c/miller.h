@@ -1,4 +1,6 @@
 #include "v.h"
+#define DO(n,x) {int i=0; for (;i<n;i++) x;}
+
 typedef struct{
 size_t p;
 size_t x;

@@ -12,4 +12,4 @@ install:
 	gcc -O2 miller.c -std=c99 -Wall -o lcs -g
  
 clean:
-	rm -rf *.o lcs
+	rm -rf *.o lcs *dSYM

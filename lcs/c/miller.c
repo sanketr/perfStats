@@ -3,6 +3,8 @@
 
 //TODO: Must be thread-safe - no global variables
 
+static size_t* til(size_t num) { size_t* idx = malloc(num*(sizeof(size_t))); DO(num,idx[i]=i); return idx;}
+
 static void inline __attribute__((always_inline)) inssnakes(int4v* a,const size_t p, const size_t x, const size_t y, const size_t l){
   int4vinsert(a,(snakes){p,x,y,l});
 }
@@ -39,10 +41,53 @@ void inline __attribute__((always_inline)) fsnakes(vec a,vec b,int4v* snakearr, 
     y += x-xp; //x-xp=cmp(a,b,x,y)
     fp[k+offset] = y;
     int4vinsert(snakearr,(snakes){snodes[kp],xp,yp,(x-xp)});
-    snodes[k+offset] = -1 + int4vsize(snakearr);
+    snodes[k+offset] = -1 + snakearr->size;
     if(vert) k+=1;
     else k-=1; 
   }
+}
+
+static vec* lcsh(vec a, vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
+  size_t n = a.size, m = b.size, delta = m-n, offset = n+1, p=-1 ,ct=0, k=0;
+  size_t* snodes = malloc((m+n+3)*sizeof(size_t)); 
+  size_t* fp = malloc((m+n+3)*sizeof(size_t)); 
+  for(int i=0;i<m+n+3;i++){ snodes[i]=-1;fp[i]=-1;}
+  int4v* snakearr;
+  int4vinit(snakearr,(m+n+1)); 
+  while(fp[delta+offset] < m){
+    p += 1;
+    ct = delta+p; k = -1*p;
+    fsnakes(a,b,snakearr,fp,snodes,k,cmp,ct);
+    ct = p; k = delta+p;
+    fsnakes(a,b,snakearr,fp,snodes,k,cmp,ct);
+    fsnakes(a,b,snakearr,fp,snodes,delta,cmp,1);
+  }
+  //TODO: iterate through snakes, and fill in paths int2v vector
+
+  free(fp); free(snodes);
+  int4vfree(snakearr);
+  return NULL;
+} 
+
+
+//flip a nested vector of vectors - size 2 
+static void inline __attribute__((always_inline)) flip(void** vec){
+    void* tmp;
+    if(vec == NULL) return;
+    else{
+      tmp=*(vec+1);
+      *(vec+1)=*(vec+0);
+      *(vec+0)=tmp;
+    }
+}
+
+vec* lcs(vec a, vec b, size_t  (*cmp)(vec,vec,size_t,size_t)){
+  bool flipped = a.size > b.size ? 1:0;
+  vec* res;
+  if(flipped) res=lcsh(b,a,cmp);
+  else res=lcsh(a,b,cmp); 
+  if(flipped) flip((void**)&res);
+  return res; 
 }
 
 //TODO: Generic vector wrapper for a,b, function ptr f, size_t k,ct
