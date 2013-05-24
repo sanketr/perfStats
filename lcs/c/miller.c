@@ -16,21 +16,25 @@ size_t int32cmp(const vec a,const vec b,size_t i,size_t j){
   return i-i1;
 }
 
-size_t chrcmp(const vec a,const vec b,size_t i,size_t j){
+size_t chrcmp(vec a,vec b,size_t i,size_t j){
   size_t i1=i;
-  char const* a1 = (char const*)a.vec;
-  char const* b1 = (char const*)b.vec;
+  char* a1 = (char*)a.vec;
+  char* b1 = (char*)b.vec;
   while((i<a.size) && (j<b.size) && a1[i] == b1[j]){i++;j++;}
   return i-i1;
 }
 
 //Note: fp, snodes are constant of size m+n+3
-void inline __attribute__((always_inline)) fsnakes(const vec a,const vec b,int4v* snakevec, int64_t* fp,int64_t* snodes, size_t k,size_t (*cmp)(vec,vec,size_t,size_t),size_t ct){
-  size_t n = a.size, m = b.size, offset = n+1;
+void inline __attribute__((always_inline)) fsnakes(vec a,vec b,int4v* snakevec, int64_t* fp,int64_t* snodes, int64_t k,size_t (*cmp)(vec,vec,size_t,size_t),size_t ct){
+  size_t n = a.size, m = b.size; 
+  int64_t offset = (int64_t) n+1;
   size_t kp;
   int64_t xp,yp,x,y;
-  bool vert = k < (m-n) ? 1:0; //vertical if below diagonal, horizontal otherwise
+  bool vert = (k < (int64_t)(m-n)) ? 1:0; //vertical if below diagonal, horizontal otherwise
   for(;0<ct;ct--){
+    #ifdef DEBUG
+    assert(((int64_t)k+offset+1) < ((int64_t) m+n+3));
+    #endif
     if(fp[k+offset-1] + 1 > fp[k+offset+1]){
         kp = k+offset-1;
         yp = fp[kp]+1;
@@ -50,8 +54,9 @@ void inline __attribute__((always_inline)) fsnakes(const vec a,const vec b,int4v
   }
 }
 
-static inline vec* lcsh(const vec a,const vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
+static inline vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
   size_t n = a.size, m = b.size, delta = m-n, offset = n+1;
+  int64_t _m = (int64_t) m;
   assert(m >= n); //delta must be positive - otherwise result is bad
   int64_t p=-1, ct=0, k=0;
   int64_t* snodes = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
@@ -59,7 +64,10 @@ static inline vec* lcsh(const vec a,const vec b,size_t (*cmp)(vec,vec,size_t,siz
   for(int i=0;i<m+n+3;i++){ snodes[i]=-1;fp[i]=-1;}
   int4v snakevec;
   int4vinit(&snakevec,(m+n+1)); 
-  while(fp[delta+offset] < (int64_t)m){
+  while(fp[delta+offset] < _m){
+    #ifdef DEBUG
+    printf("%" PRId64 " %" PRId64" % "PRId64"\n",fp[delta+offset],_m,p);
+    #endif
     p += 1;
     ct = delta+p; k = -1*p;
     fsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
@@ -90,7 +98,8 @@ static inline vec* lcsh(const vec a,const vec b,size_t (*cmp)(vec,vec,size_t,siz
   res[0].size = res[1].size = n-p;
   res[0].vec = ax;
   res[1].vec = by;
-  free(fp); free(snodes);
+  free(snodes);
+  free(fp); 
   int4vfree(&snakevec);
   return res;
 } 
@@ -106,7 +115,7 @@ static void inline __attribute__((always_inline)) flip(vec* vect){
   }
 }
 
-vec* lcs(const vec a,const vec b, size_t  (*cmp)(vec,vec,size_t,size_t)){
+vec* lcs(vec a,vec b, size_t  (*cmp)(vec,vec,size_t,size_t)){
   bool flipped = a.size > b.size ? 1:0;
   vec* res;
   if(flipped){
