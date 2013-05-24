@@ -79,15 +79,15 @@ static inline vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
   size_t* ax = malloc((n-p)*sizeof(size_t));
   size_t* by = malloc((n-p)*sizeof(size_t));
   size_t i = -1 + snakevec.size;
-  size_t j = n-p-1;
+  size_t j = n-p;
   snakes* snakesv = snakevec.vec;
   while(snakesv[i].p > -1){
     if(snakesv[i].len > 0){
       //insert into x,y size_t arrays corresponding to a and b
       //insert backwards, starting from end of the arrays
       for(size_t k=0; k < snakesv[i].len; k++){
-        ax[k+j-snakesv[i].len+1] = snakesv[i].x + k;
-        by[k+j-snakesv[i].len+1] = snakesv[i].y + k;
+        ax[k+j-snakesv[i].len] = snakesv[i].x + k;
+        by[k+j-snakesv[i].len] = snakesv[i].y + k;
         }
       j -= snakesv[i].len;
     }
