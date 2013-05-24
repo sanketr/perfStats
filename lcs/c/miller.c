@@ -1,3 +1,20 @@
+/*
+*
+* Implementation of "An O(NP) Sequence Comparison Algorithm" by Sun Wu, Udi 
+* Manber, Gene Myers and Web Miller
+* Note: P=(D-(M-N))/2 where D is shortest edit distance, M,N sequence lengths,
+* M >= N
+*******************************************************************************
+* In this implementation, thread-safety is maintained by using non-static local
+* variables. To make the implementation simple while being fast, we use custom
+* dynamic array snodes to store the snake paths. Once we reach end of both 
+* sequences, we just take the last snake path, and follow it back to its pred-
+* -ecessor and so on, until we get to the beginning of the sequence. fp stores
+* the furthest-point. snodes stores index of previous snake path in dynamic 
+* array snakevec.
+*******************************************************************************
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,8 +41,8 @@ size_t chrcmp(vec a,vec b,size_t i,size_t j){
   return i-i1;
 }
 
-//Note: fp, snodes are constant of size m+n+3
-void inline __attribute__((always_inline)) fsnakes(vec a,vec b,int4v* snakevec, int64_t* fp,int64_t* snodes, int64_t k,size_t (*cmp)(vec,vec,size_t,size_t),size_t ct){
+//Note: fp, snodes are constant of size m+n+3 - they represent furthest point, snake nodes
+static inline void __attribute__((always_inline)) findsnakes(vec a,vec b,int4v* snakevec, int64_t* fp,int64_t* snodes, int64_t k,size_t (*cmp)(vec,vec,size_t,size_t),size_t ct){
   size_t n = a.size, m = b.size; 
   int64_t offset = (int64_t) n+1;
   size_t kp;
@@ -55,10 +72,10 @@ void inline __attribute__((always_inline)) fsnakes(vec a,vec b,int4v* snakevec, 
 }
 
 static inline vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
-  size_t n = a.size, m = b.size, delta = m-n, offset = n+1;
+  size_t n = a.size, m = b.size, delta = m-n, offset = n+1, ct=0;
   int64_t _m = (int64_t) m;
   assert(m >= n); //delta must be positive - otherwise result is bad
-  int64_t p=-1, ct=0, k=0;
+  int64_t p=-1, k=0;
   int64_t* snodes = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
   int64_t* fp = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
   for(int i=0;i<m+n+3;i++){ snodes[i]=-1;fp[i]=-1;}
@@ -70,10 +87,10 @@ static inline vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
     #endif
     p += 1;
     ct = delta+p; k = -1*p;
-    fsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
+    findsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
     ct = p; k = delta+p;
-    fsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
-    fsnakes(a,b,&snakevec,fp,snodes,delta,cmp,1);
+    findsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
+    findsnakes(a,b,&snakevec,fp,snodes,delta,cmp,1);
   }
   //length of LCS is n-p - so, need only those many indices
   size_t* ax = malloc((n-p)*sizeof(size_t));
