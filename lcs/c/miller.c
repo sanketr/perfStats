@@ -18,8 +18,8 @@ size_t int32cmp(const vec a,const vec b,size_t i,size_t j){
 
 size_t chrcmp(vec a,vec b,size_t i,size_t j){
   size_t i1=i;
-  char* a1 = (char*)a.vec;
-  char* b1 = (char*)b.vec;
+  char const* a1 = (char const*)a.vec;
+  char const* b1 = (char const*)b.vec;
   while((i<a.size) && (j<b.size) && a1[i] == b1[j]){i++;j++;}
   return i-i1;
 }
@@ -104,7 +104,7 @@ static inline vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
   return res;
 } 
 
-//flip a nested vector of vectors - works only for size 2 
+//flip a vector of vectors - works only for size 2 
 static void inline __attribute__((always_inline)) flip(vec* vect){
   vec tmp;
   if(vect == NULL) return;
