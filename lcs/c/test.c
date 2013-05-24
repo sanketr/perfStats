@@ -19,7 +19,7 @@ int main(int argc, char** argv){
   b[1].size=size2;
   b[1].vec = i2;
   int64_t overhead = calc_rdtsc_overhead();
-  printf("Median Clock Measurement Overhead: %ld Cycles\n",overhead);
+  printf("Median Clock Measurement Overhead: %" PRId64 "Cycles\n",overhead);
   uint32_t TRIALS=100000;
   vec* res;
   measure_time(LCS,TRIALS,{res=lcs(b[0],b[1],chrcmp);for(size_t i=0;i<2;i++){vecfree(res[i]);}free(res);},overhead);
