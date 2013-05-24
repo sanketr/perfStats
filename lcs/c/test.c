@@ -26,8 +26,8 @@ int main(int argc, char** argv){
   /**
   size_t* idx1=(size_t*) res[0].vec, *idx2=(size_t*) res[1].vec;
   for(size_t i=0;i<res[0].size; i++) printf("a: %zu b: %zu\n",idx1[i],idx2[i]);
-  for(size_t i=0;i<2;i++){vecfree(res[i]);}
   **/
+  for(size_t i=0;i<2;i++){vecfree(res[i]);}
   free(res);
   for(size_t i=0;i<2;i++){vecfree(b[i]);}
   free(b);
