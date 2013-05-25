@@ -29,7 +29,7 @@ size_t int32cmp(const vec a,const vec b,size_t i,size_t j){
   size_t i1=i;
   int32_t const* a1 = (int32_t const*)a.vec;
   int32_t const* b1 = (int32_t const*)b.vec;
-  while((i<a.size) && (j<b.size) && a1[i] == b1[j]){i++;j++;}
+  for(;(i<a.size) && (j<b.size) && a1[i] == b1[j];i++,j++);
   return i-i1;
 }
 
@@ -37,7 +37,7 @@ size_t chrcmp(vec a,vec b,size_t i,size_t j){
   size_t i1=i;
   char const* a1 = (char const*)a.vec;
   char const* b1 = (char const*)b.vec;
-  while((i<a.size) && (j<b.size) && a1[i] == b1[j]){i++;j++;}
+  for(;(i<a.size) && (j<b.size) && a1[i] == b1[j];i++,j++);
   return i-i1;
 }
 
@@ -72,45 +72,45 @@ static inline void __attribute__((always_inline)) findsnakes(vec a,vec b,int4v* 
 }
 
 static inline vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
-  size_t n = a.size, m = b.size, delta = m-n, offset = n+1, ct=0;
+  size_t n = a.size, m = b.size, delta = m-n, offset = n+1, ct=0,p=0;
   int64_t _m = (int64_t) m;
   assert(m >= n); //delta must be positive - otherwise result is bad
-  int64_t p=-1, k=0;
+  int64_t k=0;
   int64_t* snodes = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
   int64_t* fp = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
   for(int i=0;i<m+n+3;i++){ snodes[i]=-1;fp[i]=-1;}
   int4v snakevec;
   int4vinit(&snakevec,(m+n+1)); 
-  while(fp[delta+offset] < _m){
+  //note since fp is initialized to -1 and m>0, the loop will execute
+  //at least once. So, p value is at least 0 since it is decremented 
+  //by 1 after for loop
+  for(;fp[delta+offset] < _m;p++){
     #ifdef DEBUG
     printf("%" PRId64 " %" PRId64" % "PRId64"\n",fp[delta+offset],_m,p);
     #endif
-    p += 1;
     ct = delta+p; k = -1*p;
     findsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
     ct = p; k = delta+p;
     findsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
     findsnakes(a,b,&snakevec,fp,snodes,delta,cmp,1);
   }
+  p-=1;
   //length of LCS is n-p - so, need only those many indices
   size_t* ax = malloc((n-p)*sizeof(size_t));
   size_t* by = malloc((n-p)*sizeof(size_t));
   size_t i = -1 + snakevec.size;
   size_t j = n-p;
   snakes* snakesv = snakevec.vec;
-  while(snakesv[i].p > -1){
+  for(;snakesv[i].p > -1;i=snakesv[i].p)
     if(snakesv[i].len > 0){
       //insert into x,y size_t arrays corresponding to a and b
       //insert backwards, starting from end of the arrays
-      for(size_t k=0; k < snakesv[i].len; k++){
-        ax[k+j-snakesv[i].len] = snakesv[i].x + k;
-        by[k+j-snakesv[i].len] = snakesv[i].y + k;
+      for(size_t l=0; l < snakesv[i].len; l++){
+        ax[l+j-snakesv[i].len] = snakesv[i].x + l;
+        by[l+j-snakesv[i].len] = snakesv[i].y + l;
         }
       j -= snakesv[i].len;
     }
-    //set i to index of previous node in snake array
-    i=snakesv[i].p;
-  }
   vec* res=malloc(2*sizeof(vec));
   res[0].size = res[1].size = n-p;
   res[0].vec = ax;
