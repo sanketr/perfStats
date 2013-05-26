@@ -41,13 +41,19 @@ size_t chrcmp(vec a,vec b,size_t i,size_t j){
   return i-i1;
 }
 
+static inline int64_t __attribute__((always_inline)) incr(int64_t k){
+  return k+1;
+}
+
+static inline int64_t __attribute__((always_inline)) decr(int64_t k){
+  return k-1;
+}
+
 //Note: fp, snodes are constant of size m+n+3 - they represent furthest point, snake nodes
-static inline void __attribute__((always_inline)) findsnakes(vec a,vec b,int4v* snakevec, int64_t* fp,int64_t* snodes, int64_t k,size_t (*cmp)(vec,vec,size_t,size_t),size_t ct){
-  size_t n = a.size, m = b.size; 
-  int64_t offset = (int64_t) n+1;
+static inline void __attribute__((always_inline)) findsnakes(vec a,vec b,int4v* snakevec, int64_t* fp,int64_t* snodes, int64_t k,size_t (*cmp)(vec,vec,size_t,size_t),size_t ct, int64_t (*op)(int64_t)){
+  int64_t offset = (int64_t) a.size+1;
   size_t kp;
   int64_t xp,yp,x,y;
-  bool vert = (k < (int64_t)(m-n)) ? 1:0; //vertical if below diagonal, horizontal otherwise
   for(;0<ct;ct--){
     #ifdef DEBUG
     assert(((int64_t)k+offset+1) < ((int64_t) m+n+3));
@@ -66,8 +72,7 @@ static inline void __attribute__((always_inline)) findsnakes(vec a,vec b,int4v* 
     fp[k+offset] = y;
     int4vinsert(snakevec,(snakes){snodes[kp],xp,yp,(size_t)(x-xp)});
     snodes[k+offset] = -1 + snakevec->size;
-    if(vert) k+=1;
-    else k-=1; 
+    k=op(k);
   }
 }
 
@@ -83,16 +88,16 @@ static inline vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
   int4vinit(&snakevec,(m+n+1)); 
   //note since fp is initialized to -1 and m>0, the loop will execute
   //at least once. So, p value is at least 0 since it is decremented 
-  //by 1 after for loop
+  //by 1 after exiting the loop
   for(;fp[delta+offset] < _m;p++){
     #ifdef DEBUG
     printf("%" PRId64 " %" PRId64" % "PRId64"\n",fp[delta+offset],_m,p);
     #endif
     ct = delta+p; k = -1*p;
-    findsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
+    findsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct,incr);
     ct = p; k = delta+p;
-    findsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct);
-    findsnakes(a,b,&snakevec,fp,snodes,delta,cmp,1);
+    findsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct,decr);
+    findsnakes(a,b,&snakevec,fp,snodes,delta,cmp,1,decr);
   }
   p-=1;
   //length of LCS is n-p - so, need only those many indices
