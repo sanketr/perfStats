@@ -76,10 +76,12 @@ static inline void __attribute__((always_inline)) findsnakes(vec a,vec b,int4v* 
   }
 }
 
-static inline vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
+static vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
   size_t n = a.size, m = b.size, delta = m-n, offset = n+1, ct=0,p=0;
   int64_t _m = (int64_t) m;
+  #ifdef DEBUG
   assert(m >= n); //delta must be positive - otherwise result is bad
+  #endif
   int64_t k=0;
   int64_t* snodes = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
   int64_t* fp = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
