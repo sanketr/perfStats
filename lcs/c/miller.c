@@ -77,12 +77,11 @@ static inline void __attribute__((always_inline)) findsnakes(vec a,vec b,int4v* 
 }
 
 static vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
-  size_t n = a.size, m = b.size, delta = m-n, offset = n+1, ct=0,p=0;
+  size_t n = a.size, m = b.size, delta = m-n, offset = n+1, p=0;
   int64_t _m = (int64_t) m;
   #ifdef DEBUG
   assert(m >= n); //delta must be positive - otherwise result is bad
   #endif
-  int64_t k=0;
   int64_t* snodes = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
   int64_t* fp = (int64_t*) malloc((m+n+3)*sizeof(int64_t)); 
   for(int i=0;i<m+n+3;i++){ snodes[i]=-1;fp[i]=-1;}
@@ -95,10 +94,8 @@ static vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
     #ifdef DEBUG
     printf("%" PRId64 " %" PRId64" % "PRId64"\n",fp[delta+offset],_m,p);
     #endif
-    ct = delta+p; k = -1*p;
-    findsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct,incr);
-    ct = p; k = delta+p;
-    findsnakes(a,b,&snakevec,fp,snodes,k,cmp,ct,decr);
+    findsnakes(a,b,&snakevec,fp,snodes,-1*p,cmp,delta+p,incr);
+    findsnakes(a,b,&snakevec,fp,snodes,delta+p,cmp,p,decr);
     findsnakes(a,b,&snakevec,fp,snodes,delta,cmp,1,decr);
   }
   p-=1;
