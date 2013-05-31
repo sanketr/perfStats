@@ -27,6 +27,7 @@ void CONCAT(name,insert)(name *v, type e){\
     if(v->vec == NULL){\
       v->size=0;\
       v->cap=0;\
+      return;\
       }\
   }\
   v->vec[v->size++] = e;\
