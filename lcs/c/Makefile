@@ -14,7 +14,7 @@ install:
 	gcc -O2 test.c miller.o timer.o -std=c99 -Wall -o lcs -g $(GCCFLAGS) -lgsl -lgslcblas
 
 qlib:
-	gcc -O3 -shared -fPIC t.c -o t.so
+	gcc -O2 lcs.c utils.c -std=c99 -Wall -shared -fPIC -o lcs.so
  
 clean:
 	rm -rf *.o *.so lcs *dSYM

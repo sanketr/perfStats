@@ -27,11 +27,11 @@
 //Thread-safe - no global, or local static variables
 
 static inline I __attribute__((always_inline)) incr(I k){
-  return k+1;
+  R k+1;
 }
 
 static inline I __attribute__((always_inline)) decr(I k){
-  return k-1;
+  R k-1;
 }
 
 //Note: fp, snodes are constant of size m+n+3 - they represent furthest point, snake nodes
@@ -82,10 +82,8 @@ static K lcsh(K a,K b,I (*cmp)(K,K,I,I), bool flipped){
   I i = -1 + snakevec.size;
   I j = n-p;
   snakes* snakesv = snakevec.vec;
-  bool done = 0;
   //there will always be one snake since findsnakes executes at least for delta diagonal
   //so need to execute at least once for the case when there is only one snake
-  //for(; !done; i=snakesv[i].p,done = snakesv[i].p == -1)
   do{
     if(snakesv[i].len > 0){
       //insert into x,y size_t arrays corresponding to a and b
@@ -101,20 +99,20 @@ static K lcsh(K a,K b,I (*cmp)(K,K,I,I), bool flipped){
   free(snodes);
   free(fp); 
   int4vfree(&snakevec);
-  return flipped ? knk(2,by,ax) : knk(2,ax,by);
+  R flipped ? knk(2,by,ax) : knk(2,ax,by);
 } 
 
 K lcs(K a,K b){
   bool g=0; 
-  if(a->t < 0 || b->t < 0)  return knk(2,ki(ni),ki(ni));
+  if(a->t < 0 || b->t < 0)  R knk(2,ki(ni),ki(ni));
   //check if general list - validate for conforming shape if general list 
   if(a->t == 0){
-    if(!validate(a,b)) return knk(2,ki(ni),ki(ni)); //return null if in bad form
+    if(!validate(a,b)) R knk(2,ki(ni),ki(ni)); //return null if in bad form
     g = 1;
   }
   //if here, both a and b are vectors - check if same types
-  if(a->t != b->t) return knk(2,ki(ni),ki(ni));
+  if(a->t != b->t) R knk(2,ki(ni),ki(ni));
 
-  if(a->n > b->n) return lcsh(b,a,g?cmpg:cmpv,1);
-  else return lcsh(a,b,g?cmpg:cmpv,0); 
+  if(a->n > b->n) R lcsh(b,a,g?cmpg:cmpv,1);
+  else R lcsh(a,b,g?cmpg:cmpv,0); 
 }

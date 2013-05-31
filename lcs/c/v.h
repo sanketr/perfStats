@@ -10,7 +10,7 @@ typedef struct {\
   type* vec;\
 } name;\
 \
-size_t CONCAT(name,init)(name *v, size_t size){\
+static size_t CONCAT(name,init)(name *v, size_t size){\
   v->size = 0;\
   v->cap = 0;\
   v->vec = (type*) malloc(size*(sizeof(type)));\
@@ -19,7 +19,7 @@ size_t CONCAT(name,init)(name *v, size_t size){\
   return size;\
 }\
 \
-void CONCAT(name,insert)(name *v, type e){\
+static void CONCAT(name,insert)(name *v, type e){\
   if(v->vec == NULL) return;\
   if(v->size == v->cap){\
     v->cap *= SCALING;\
@@ -33,17 +33,17 @@ void CONCAT(name,insert)(name *v, type e){\
   v->vec[v->size++] = e;\
 }\
 \
-int inline CONCAT(name,size)(name *v) {\
+static int inline CONCAT(name,size)(name *v) {\
   if(v->vec == NULL) return 0;\
   else return v->size;\
 }\
 \
-int inline CONCAT(name,cap)(name *v){\
+static int inline CONCAT(name,cap)(name *v){\
   if(v->vec == NULL) return 0;\
   else return v->cap;\
 }\
 \
-void CONCAT(name,free)(name *v){\
+static void CONCAT(name,free)(name *v){\
   v->size=0;\
   v->cap=0;\
   free(v->vec);\

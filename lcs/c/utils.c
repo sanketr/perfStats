@@ -22,6 +22,10 @@ C validate(K x,K y){
   else R 1; //not a mixed list - since types and length are equal, return 1
 }
 
+K test(K x,K y){
+  R ki(validate(x,y));
+}
+
 //quick vector equality comparison - assumption is x,y length are very small, typically 2 or 3
 static inline uint8_t __attribute__((always_inline)) equalV(K x,K y,I t){
   I i=0;
@@ -70,7 +74,7 @@ static inline uint8_t __attribute__((always_inline)) equalH(K x,K y,I t){
   //if here, it is a general list of atoms - we don't allow list of lists
   I i=0;
   uint8_t equal=1;
-  for(;i<x->n;i++) equal = equal && equalA(kK(x)[i],kK(y)[i],kK(x)[i]->t); //we already validate that x and y are of same types 
+  for(;i<x->n;i++) equal = equal && equalA(kK(x)[i],kK(y)[i],kK(x)[i]->t); //assumption: we already validate that x and y are of same types 
   R equal;
 }
 
