@@ -105,7 +105,9 @@ static vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
   size_t i = -1 + snakevec.size;
   size_t j = n-p;
   snakes* snakesv = snakevec.vec;
-  for(;snakesv[i].p > -1;i=snakesv[i].p)
+  //there will always be one snake since findsnakes executes at least for delta diagonal
+  //so need to execute at least once for the case when there is only one snake
+  do{
     if(snakesv[i].len > 0){
       //insert into x,y size_t arrays corresponding to a and b
       //insert backwards, starting from end of the arrays
@@ -115,6 +117,8 @@ static vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
         }
       j -= snakesv[i].len;
     }
+    i=snakesv[i].p;
+  }while(i>-1);
   vec* res=malloc(2*sizeof(vec));
   res[0].size = res[1].size = n-p;
   res[0].vec = ax;
