@@ -7,6 +7,7 @@
 //In Miller-Myers diff algorithm, m>n - so, function flips arguments if this is not the case
 
 lcs:(`$":/home/saagrawa/scripts/perfStats/lcs/c/lcs") 2:(`lcs;2);
+t:(`$":/home/saagrawa/scripts/perfStats/lcs/c/lcs") 2:(`test;2);
 
 //Wrapper to find mutations between two tables given s in sym column. c columns are used
 //for mutation check - for example, price and size columns have very good quality signal
