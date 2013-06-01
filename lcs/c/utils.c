@@ -1,6 +1,5 @@
-#define KXVER 2
-#include "k.h"
 #include <inttypes.h>
+#include "utils.h"
 
 /* Function to validate two nested lists x and y of depth 1 have same element count for
 ** x[0],y[0] etc.
