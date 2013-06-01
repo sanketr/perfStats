@@ -2,7 +2,7 @@
 #include "k.h"
 #include <inttypes.h>
 
-/* Function to validate two nested lists x and y of depth 1 have same types for
+/* Function to validate two nested lists x and y of depth 1 have same element count for
 ** x[0],y[0] etc.
 */
 C validate(K x,K y){
@@ -14,7 +14,7 @@ C validate(K x,K y){
   for(i=0;i<-1+y->n;i++)
     if(kK(y)[i]->n != kK(y)[i+1]->n) R 0;
   i=0; if(kK(x)[i]->n != kK(y)[i]->n) R 0;
-  R 1; //since types and length are equal, return 1
+  R 1; //since lists are of same shape, return 1
 }
 
 K test(K x,K y){

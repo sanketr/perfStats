@@ -102,7 +102,7 @@ static vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
   //length of LCS is n-p - so, need only those many indices
   size_t* ax = malloc((n-p)*sizeof(size_t));
   size_t* by = malloc((n-p)*sizeof(size_t));
-  size_t i = -1 + snakevec.size;
+  int64_t i = (int64_t) -1 + snakevec.size;
   size_t j = n-p;
   snakes* snakesv = snakevec.vec;
   //there will always be one snake since findsnakes executes at least for delta diagonal
