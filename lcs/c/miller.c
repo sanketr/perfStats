@@ -76,7 +76,7 @@ static inline void __attribute__((always_inline)) findsnakes(vec a,vec b,int4v* 
   }
 }
 
-static vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
+static vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t),bool flip){
   size_t n = a.size, m = b.size, delta = m-n, offset = n+1, p=0;
   int64_t _m = (int64_t) m;
   #ifdef DEBUG
@@ -121,31 +121,18 @@ static vec* lcsh(vec a,vec b,size_t (*cmp)(vec,vec,size_t,size_t)){
   }while(i>-1);
   vec* res=malloc(2*sizeof(vec));
   res[0].size = res[1].size = n-p;
-  res[0].vec = ax;
-  res[1].vec = by;
+  res[0].vec = flip?by:ax;
+  res[1].vec = flip?ax:by;
   free(snodes);
   free(fp); 
   int4vfree(&snakevec);
   return res;
 } 
 
-//flip a vector of vectors - works only for size 2 
-static void inline __attribute__((always_inline)) flip(vec* vect){
-  vec tmp;
-  if(vect == NULL) return;
-  else{
-    tmp=vect[1];
-    vect[1]=vect[0];
-    vect[0]=tmp;
-  }
-}
-
 vec* lcs(vec a,vec b, size_t  (*cmp)(vec,vec,size_t,size_t)){
-  bool flipped = a.size > b.size ? 1:0;
+  bool flip = a.size > b.size ? 1:0;
   vec* res;
-  if(flipped){
-    res=lcsh(b,a,cmp);flip(res);
-   }
-  else res=lcsh(a,b,cmp); 
+  if(flip) res=lcsh(b,a,cmp,1);
+  else res=lcsh(a,b,cmp,0); 
   return res; 
 }
