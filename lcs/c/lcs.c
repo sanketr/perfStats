@@ -34,8 +34,6 @@ I len;
 
 DARRAY(int4v,snakes); //dynamic vector of 4-ints
 
-//Thread-safe - no global, or local static variables
-
 static inline I __attribute__((always_inline)) incr(I k){
   R k+1;
 }
@@ -122,7 +120,8 @@ K lcs(K a,K b){
   }
   //if here, both a and b are vectors - check if same types
   if(a->t != b->t) R knk(2,ki(ni),ki(ni));
-
+  //in miller algorithm, length of b > length a - flip arguments if needed
+  //returned indices will be "unflipped" to maintain correct order
   if(a->n > b->n) R lcsh(b,a,g?cmpg:cmpv,1);
   else R lcsh(a,b,g?cmpg:cmpv,0); 
 }
