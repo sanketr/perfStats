@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
-module Test where
+module Main where
 import Data.Vector.Unboxed.Mutable as MU
 import Data.Vector.Unboxed as U hiding (mapM_,forM_)
 import Control.Monad.ST as ST
@@ -70,6 +70,7 @@ gridWalk a b fp snodes snakesv k cmp = do
    snakesv <- append snakesv (snodep,xp,yp,len)
    MU.unsafeWrite snodes (k+offset) (-1+(sizev snakesv))
    return snakesv
+{-#INLINE gridWalk #-}
 
 findSnakes :: Vector Int -> Vector Int -> MVI1 s -> MVI1 s -> Snakev s -> Int -> Int -> (Vector Int -> Vector Int -> Int -> Int -> Int) -> (Int -> Int -> Int) -> ST s (Snakev s)
 findSnakes a b fp snodes snakesv k ct cmp op = do
@@ -82,8 +83,8 @@ while cond action = do
         action
         while cond action
 
-lcsh :: Vector Int -> Vector Int -> Bool -> ST s Int
-lcsh a b flip = do
+lcsh :: Vector Int -> Vector Int -> Bool -> Int
+lcsh a b flip = runST $ do
   let n = U.length a
       m = U.length b
       delta = m-n
@@ -103,3 +104,9 @@ lcsh a b flip = do
       modifySTRef s (\_ -> s3)
       modifySTRef p (+1)
   readSTRef p >>= \x -> return $ x-1
+
+lcs :: Vector Int -> Vector Int -> Int
+lcs a b | (U.length a > U.length b) = lcsh b a True
+        | otherwise = lcsh a b False
+
+main = print $ lcsh (U.fromList [1..3])  (U.fromList [1..5]) False
