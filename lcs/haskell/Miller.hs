@@ -1,4 +1,20 @@
 {-# LANGUAGE BangPatterns #-}
+
+-- |
+-- Implementation of "An O(NP) Sequence Comparison Algorithm" by Sun Wu, Udi
+-- Manber, Gene Myers and Web Miller
+-- Note: P=(D-(M-N))/2 where D is shortest edit distance, M,N sequence lengths,
+-- M >= N
+----------------------------------------------------------------------
+-- To make the implementation simple while being fast, we use custom
+-- dynamic array snakesv to store the snake paths. Once we reach end of both
+-- sequences, we just take the last snake path, and follow it back to its pred-
+-- -ecessor and so on, until we get to the beginning of the sequence. fp stores
+-- the furthest-point. snodes stores location of previous snake path in 
+-- snakevec.
+----------------------------------------------------------------------
+-- 
+
 module Main where
 import Data.Vector.Unboxed.Mutable as MU
 import Data.Vector.Unboxed as U hiding (mapM_)
