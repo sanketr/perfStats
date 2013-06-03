@@ -8,6 +8,11 @@ import Control.Monad (when)
 import GHC.Float.RealFracMethods (int2Float)
 import Data.STRef (newSTRef, modifySTRef, readSTRef)
 
+type MVI1 s  = MVector (PrimState (ST s)) Int
+type MVI4 s  = MVector (PrimState (ST s)) (Int,Int,Int,Int)
+data Snakev s = S {-# UNPACK #-}!Int 
+                                !(MVI4 s) 
+
 cmp :: (U.Unbox a, Eq a) => U.Vector a -> U.Vector a -> Int -> Int -> Int
 cmp a b i j = go a b 0 i j
                where
@@ -17,13 +22,8 @@ cmp a b i j = go a b 0 i j
                     n = U.length a
                     m = U.length b
 
-type MVI1 s  = MVector (PrimState (ST s)) Int
-type MVI4 s  = MVector (PrimState (ST s)) (Int,Int,Int,Int)
-data Snakev s = S {-# UNPACK #-}!Int 
-                                (MVI4 s) 
-
 newVI1 :: Int -> Int -> ST s (MVI1 s)
-newVI1 n x = do 
+newVI1 n !x = do 
           a <- new n
           mapM_ (\i -> MU.unsafeWrite a i x) [0..n-1]
           return a 
@@ -34,14 +34,14 @@ newSnakes n = do
             v <- new n
             return (S 0 v)
 
-sizev :: Snakev s -> Int
-sizev (S i _) = i
+sizesnakev :: Snakev s -> Int
+sizesnakev (S i _) = i
+{-#INLINE sizesnakev #-}
 
 append :: Snakev s -> (Int,Int,Int,Int) -> ST s (Snakev s)
-append (S i v) x = do
+append (S i v) !x = do
    if i < MU.length v then MU.unsafeWrite v i x >> return (S (i+1) v)
    else MU.unsafeGrow v (floor $ 1.5 * (int2Float $ MU.length v)) >>= (\y -> MU.unsafeWrite y i x >> return (S (i+1) y))
-{-#INLINE append #-}
    
 -- function to find previous y on diagonal k for furthest point 
 findYP :: MVI1 s -> Int -> Int -> ST s (Int,Int)
@@ -55,8 +55,8 @@ findYP fp k offset = do
 {-#INLINE findYP #-}
 
 gridWalk :: Vector Int -> Vector Int -> MVI1 s -> MVI1 s -> Snakev s -> Int -> (Vector Int -> Vector Int -> Int -> Int -> Int) -> ST s (Snakev s)
-gridWalk a b fp snodes snakesv k cmp = do
-   let offset = 1+U.length a
+gridWalk a b fp snodes snakesv !k cmp = do
+   let !offset = 1+U.length a
    (!kp,!yp) <- findYP fp k offset                          
    let xp = yp-k
        len = cmp a b xp yp
@@ -65,36 +65,40 @@ gridWalk a b fp snodes snakesv k cmp = do
    MU.unsafeWrite fp (k+offset) y  
    snodep <- MU.unsafeRead snodes kp -- get the previous snake node
    snakesv <- append snakesv (snodep,xp,yp,len)
-   MU.unsafeWrite snodes (k+offset) (-1+(sizev snakesv))
+   MU.unsafeWrite snodes (k+offset) (-1+(sizesnakev snakesv))
    return snakesv
 {-#INLINE gridWalk #-}
 
 findSnakes :: Vector Int -> Vector Int -> MVI1 s -> MVI1 s -> Snakev s -> Int -> Int -> (Vector Int -> Vector Int -> Int -> Int -> Int) -> (Int -> Int -> Int) -> ST s (Snakev s)
-findSnakes a b fp snodes snakesv k ct cmp op = do
+findSnakes a b fp snodes snakesv !k !ct cmp op = do
   U.foldM (\s x -> gridWalk a b fp snodes s (op k x) cmp) snakesv (U.fromList [0..ct-1])
+{-#INLINE findSnakes #-}
 
 while :: (Monad m) => m Bool -> m a -> m ()
-while cond action = do
+while !cond !action = do
       c <- cond
       when c $ do
         action
         while cond action
 
-{--
-genIndices v len a b  = go (U.unsafeIndex v (len-1)) a b (len-1) (MU.length a)
-  where
-    go (p,x,y,l) a b i j | l > 0 && i>-1 = go (U.unsafeIndex v p) a b p (j-l)
-                         | i > -1 = go (U.unsafeIndex v p) a b p (j-l)
-                         | otherwise = (a,b)
---}
-
 fill :: MVI1 s -> Int -> Int -> Int -> ST s ()
 fill v i x l = U.forM_ (U.fromList [0..l-1]) (\idx -> MU.unsafeWrite v (i+idx) (x+idx))
 
-test2 :: Int -> Vector Int
-test2 n = runST $ newVI1 n (-1) >>=(\x -> fill x 0 3 n >> U.unsafeFreeze x)
-
-lcsh :: Vector Int -> Vector Int -> Bool -> Int
+iter :: Snakev s -> MVI1 s -> MVI1 s -> ST s ()
+iter (S len v) a b = do
+   il <- newSTRef (len-1)
+   jl <- newSTRef (MU.length a)
+   while (readSTRef il >>= \x -> return (x > (-1))) $ do
+    i <- readSTRef il
+    (p,x,y,l) <- MU.unsafeRead v i
+    when (l>0) $ do
+      j <- readSTRef jl
+      fill a (j-l) x l
+      fill b (j-l) y l
+      modifySTRef jl (\_ -> j-l)
+    modifySTRef il (\_ -> p)
+      
+lcsh :: Vector Int -> Vector Int -> Bool -> (Vector Int,Vector Int)
 lcsh a b flip = runST $ do
   let n = U.length a
       m = U.length b
@@ -105,7 +109,7 @@ lcsh a b flip = runST $ do
   snakesv <- newSnakes (m+n+1)
   p <- newSTRef 0
   s <- newSTRef snakesv
-  while (MU.unsafeRead fp (delta+offset) >>= \x -> return (x<m))
+  while (MU.unsafeRead fp (delta+offset) >>= \x -> return $! (x<m))
     $ do 
       n <- readSTRef p
       s0 <- readSTRef s
@@ -114,9 +118,17 @@ lcsh a b flip = runST $ do
       s3 <- findSnakes a b fp snodes s2 delta 1 cmp (-)
       modifySTRef s (\_ -> s3)
       modifySTRef p (+1)
-  readSTRef p >>= \x -> return $ x-1
+  plen <- readSTRef p
+  snakesv <- readSTRef s
+  a1 <- MU.new ((U.length a)-plen+1)
+  b1 <- MU.new ((U.length a)-plen+1)
+  iter snakesv a1 b1
+  a1 <- U.unsafeFreeze a1
+  b1 <- U.unsafeFreeze b1
+  if flip then return (b1,a1)
+  else return (a1,b1)
 
-lcs :: Vector Int -> Vector Int -> Int
+lcs :: Vector Int -> Vector Int -> (Vector Int,Vector Int)
 lcs a b | (U.length a > U.length b) = lcsh b a True
         | otherwise = lcsh a b False
 
