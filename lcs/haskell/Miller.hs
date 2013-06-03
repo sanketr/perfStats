@@ -136,10 +136,10 @@ lcsh a b flip = runST $ do
       s3 <- findSnakes a b fp snodes s2 delta 1 cmp (-)
       modifySTRef s (\_ -> s3)
       modifySTRef p (+1)
-  plen <- readSTRef p
+  lcslen <- (readSTRef p >>= \x -> return $ (U.length a)-(x-1))
   snakesv <- readSTRef s
-  a1 <- MU.new ((U.length a)-plen+1)
-  b1 <- MU.new ((U.length a)-plen+1)
+  a1 <- MU.new lcslen
+  b1 <- MU.new lcslen
   iter snakesv a1 b1
   a1 <- U.unsafeFreeze a1
   b1 <- U.unsafeFreeze b1
