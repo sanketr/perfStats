@@ -3,3 +3,4 @@ test
 *.hi
 *.cpp
 *.swp
+*.so
