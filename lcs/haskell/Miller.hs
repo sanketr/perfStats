@@ -6,6 +6,7 @@ import Control.Monad.ST as ST
 import Control.Monad.Primitive (PrimState)
 import Control.Monad (when) 
 import GHC.Float.RealFracMethods (int2Float)
+import Data.STRef (newSTRef, modifySTRef, readSTRef)
 
 cmp :: (U.Unbox a, Eq a) => U.Vector a -> U.Vector a -> Int -> Int -> Int
 cmp a b i j = go a b 0 i j
@@ -66,7 +67,6 @@ gridWalk a b fp snodes snakesv k cmp = do
        y = yp+len
    MU.unsafeWrite fp (k+offset) y  
    snodep <- MU.unsafeRead snodes kp -- get the previous snake node
-   -- placeholder to insert snakes - TODO - add logic to determine index
    snakesv <- append snakesv (snodep,xp,yp,len)
    MU.unsafeWrite snodes (k+offset) (-1+(sizev snakesv))
    return snakesv
@@ -82,21 +82,24 @@ while cond action = do
         action
         while cond action
 
-lcsh :: (Unbox a) => Vector a -> Vector a -> Bool -> ST s Bool
+lcsh :: Vector Int -> Vector Int -> Bool -> ST s Int
 lcsh a b flip = do
   let n = U.length a
       m = U.length b
       delta = m-n
       offset=n+1
-      p=0
   fp <- newVI1 (m+n+3) (-1)
   snodes <- newVI1 (m+n+3) (-1)
   snakesv <- newSnakes (m+n+1)
-  {--
-  while (U.unsafeRead fp (delta+offset) >>= \x -> x < m)
-    (findSnakes a b fp snodes snakesv (-1*p) (delta+p) cmp (+) >>=
-     \x -> findSnakes a b fp snodes x (delta+p) p cmp (-) >>=
-     \x -> findSnakes a b fp snodes x delta 1 cmp (-) ) 
-  --}
-  return True
-    
+  p <- newSTRef 0
+  s <- newSTRef snakesv
+  while (MU.unsafeRead fp (delta+offset) >>= \x -> return (x<m))
+    $ do 
+      n <- readSTRef p
+      s0 <- readSTRef s
+      s1 <- findSnakes a b fp snodes s0 (-n) (delta+n) cmp (+)
+      s2 <- findSnakes a b fp snodes s1 (delta+n) n cmp (-)
+      s3 <- findSnakes a b fp snodes s2 delta 1 cmp (-)
+      modifySTRef s (\_ -> s3)
+      modifySTRef p (+1)
+  readSTRef p >>= \x -> return $ x-1
