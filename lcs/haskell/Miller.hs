@@ -83,6 +83,14 @@ while cond action = do
         action
         while cond action
 
+{--
+genIndices v len a b  = go (U.unsafeIndex v (len-1)) a b (len-1) (MU.length a)
+  where
+    go (p,x,y,l) a b i j | l > 0 && i>-1 = go (U.unsafeIndex v p) a b p (j-l)
+                         | i > -1 = go (U.unsafeIndex v p) a b p (j-l)
+                         | otherwise = (a,b)
+--}
+
 lcsh :: Vector Int -> Vector Int -> Bool -> Int
 lcsh a b flip = runST $ do
   let n = U.length a
