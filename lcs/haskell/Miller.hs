@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 module Main where
 import Data.Vector.Unboxed.Mutable as MU
-import Data.Vector.Unboxed as U hiding (mapM_,forM_)
+import Data.Vector.Unboxed as U hiding (mapM_)
 import Control.Monad.ST as ST
 import Control.Monad.Primitive (PrimState)
 import Control.Monad (when) 
@@ -33,9 +33,6 @@ newSnakes :: Int -> ST s (Snakev s)
 newSnakes n = do
             v <- new n
             return (S 0 v)
-
-test2 :: Int -> ST s (Vector Int)
-test2 n = newVI1 n (-1) >>= U.unsafeFreeze
 
 sizev :: Snakev s -> Int
 sizev (S i _) = i
@@ -90,6 +87,12 @@ genIndices v len a b  = go (U.unsafeIndex v (len-1)) a b (len-1) (MU.length a)
                          | i > -1 = go (U.unsafeIndex v p) a b p (j-l)
                          | otherwise = (a,b)
 --}
+
+fill :: MVI1 s -> Int -> Int -> Int -> ST s ()
+fill v i x l = U.forM_ (U.fromList [0..l-1]) (\idx -> MU.unsafeWrite v (i+idx) (x+idx))
+
+test2 :: Int -> Vector Int
+test2 n = runST $ newVI1 n (-1) >>=(\x -> fill x 0 3 n >> U.unsafeFreeze x)
 
 lcsh :: Vector Int -> Vector Int -> Bool -> Int
 lcsh a b flip = runST $ do
