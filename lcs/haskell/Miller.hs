@@ -7,6 +7,8 @@ import Control.Monad.Primitive (PrimState)
 import Control.Monad (when) 
 import GHC.Float.RealFracMethods (int2Float)
 import Data.STRef (newSTRef, modifySTRef, readSTRef)
+import Criterion.Main
+import Criterion.Config
 
 type MVI1 s  = MVector (PrimState (ST s)) Int
 type MVI4 s  = MVector (PrimState (ST s)) (Int,Int,Int,Int)
@@ -54,7 +56,7 @@ findYP fp k offset = do
               else return (k1,y1)
 {-#INLINE findYP #-}
 
-gridWalk :: Vector Int -> Vector Int -> MVI1 s -> MVI1 s -> Snakev s -> Int -> (Vector Int -> Vector Int -> Int -> Int -> Int) -> ST s (Snakev s)
+gridWalk :: (U.Unbox a, Eq a) => Vector a -> Vector a -> MVI1 s -> MVI1 s -> Snakev s -> Int -> (Vector a -> Vector a -> Int -> Int -> Int) -> ST s (Snakev s)
 gridWalk a b fp snodes snakesv !k cmp = do
    let !offset = 1+U.length a
    (!kp,!yp) <- findYP fp k offset                          
@@ -69,7 +71,7 @@ gridWalk a b fp snodes snakesv !k cmp = do
    return snakesv
 {-#INLINE gridWalk #-}
 
-findSnakes :: Vector Int -> Vector Int -> MVI1 s -> MVI1 s -> Snakev s -> Int -> Int -> (Vector Int -> Vector Int -> Int -> Int -> Int) -> (Int -> Int -> Int) -> ST s (Snakev s)
+findSnakes :: (U.Unbox a, Eq a) => Vector a -> Vector a -> MVI1 s -> MVI1 s -> Snakev s -> Int -> Int -> (Vector a -> Vector a -> Int -> Int -> Int) -> (Int -> Int -> Int) -> ST s (Snakev s)
 findSnakes a b fp snodes snakesv !k !ct cmp op = do
   U.foldM (\s x -> gridWalk a b fp snodes s (op k x) cmp) snakesv (U.fromList [0..ct-1])
 {-#INLINE findSnakes #-}
@@ -98,7 +100,7 @@ iter (S len v) a b = do
       modifySTRef jl (\_ -> j-l)
     modifySTRef il (\_ -> p)
       
-lcsh :: Vector Int -> Vector Int -> Bool -> (Vector Int,Vector Int)
+lcsh :: (U.Unbox a, Eq a) => Vector a -> Vector a -> Bool -> (Vector Int,Vector Int)
 lcsh a b flip = runST $ do
   let n = U.length a
       m = U.length b
@@ -128,8 +130,21 @@ lcsh a b flip = runST $ do
   if flip then return (b1,a1)
   else return (a1,b1)
 
-lcs :: Vector Int -> Vector Int -> (Vector Int,Vector Int)
+lcs :: (U.Unbox a, Eq a) => Vector a -> Vector a -> (Vector Int,Vector Int)
 lcs a b | (U.length a > U.length b) = lcsh b a True
         | otherwise = lcsh a b False
 
-main = print $ lcsh (U.fromList [1..3])  (U.fromList [1..5]) False
+config :: Config
+config = defaultConfig  { cfgSamples = ljust 100 }
+
+a = U.fromList ['a'..'j'] :: Vector Char
+b = U.fromList ['a'..'k'] :: Vector Char
+
+suite :: [Benchmark]
+suite = [
+          bench "lcs 10" $ whnf (lcs a) b
+        ]
+
+--main = print $ lcs (U.fromList ['a'..'e'])  (U.fromList ['b'..'c'])
+main :: IO()
+main = defaultMainWith config (return ()) suite
