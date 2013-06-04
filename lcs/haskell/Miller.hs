@@ -15,7 +15,9 @@
 ----------------------------------------------------------------------
 -- 
 
-module Main where
+module Diff 
+( lcs )
+where
 import Data.Vector.Unboxed.Mutable as MU
 import Data.Vector.Unboxed as U hiding (mapM_)
 import Control.Monad.ST as ST
@@ -24,8 +26,8 @@ import Control.Monad (when)
 import GHC.Float.RealFracMethods (int2Float)
 import Data.STRef (newSTRef, modifySTRef, readSTRef)
 import Data.Word
-import Criterion.Main
-import Criterion.Config
+--import Criterion.Main
+--import Criterion.Config
 
 type MVI1 s  = MVector (PrimState (ST s)) Int
 type MVI4 s  = MVector (PrimState (ST s)) (Int,Int,Int,Int)
@@ -161,13 +163,14 @@ lcsh a b flip = runST $ do
   b1 <- U.unsafeFreeze b1
   if flip then return (b1,a1) -- maintain correct order when returning indices
   else return (a1,b1)
+{-# INLINE lcsh #-}
 
 -- Function to find longest common subsequence given unboxed vectors a and b
 -- It returns indices of LCS in a and b
 lcs :: (U.Unbox a, Eq a) => Vector a -> Vector a -> (Vector Int,Vector Int)
 lcs a b | (U.length a > U.length b) = lcsh b a True
         | otherwise = lcsh a b False
-
+{--
 config :: Config
 config = defaultConfig  { cfgSamples = ljust 100 }
 
@@ -181,3 +184,4 @@ suite = [
 
 main :: IO()
 main = defaultMainWith config (return ()) suite
+--}
