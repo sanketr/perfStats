@@ -87,9 +87,9 @@ gridWalk a b fp snodes snakesv !k cmp = do
        x = xp+len
        y = yp+len
    MU.unsafeWrite fp (k+offset) y  
-   snodep <- MU.unsafeRead snodes kp -- get the previous snake node
+   snodep <- MU.unsafeRead snodes kp -- get the index of previous snake node in snakev array
    snakesv <- append snakesv (snodep,xp,yp,len)
-   MU.unsafeWrite snodes (k+offset) (-1+(sizesnakev snakesv))
+   MU.unsafeWrite snodes (k+offset) (-1+(sizesnakev snakesv)) -- store the snakev index location of current snake node
    return snakesv
 {-#INLINE gridWalk #-}
 
@@ -121,30 +121,34 @@ fill v i x l = U.forM_ (U.fromList [0..l-1]) (\idx -> MU.unsafeWrite v (i+idx) (
 --  previous node is -1. This is used as loop termination condition.
 iter :: Snakev s -> MVI1 s -> MVI1 s -> ST s ()
 iter (S len v) a b = do
-   il <- newSTRef (len-1)
-   jl <- newSTRef (MU.length a)
-   while (readSTRef il >>= \x -> return (x > (-1))) $ do
+   il <- newSTRef (len-1) -- array index of last snake
+   jl <- newSTRef (MU.length a) -- jl keeps track of current location in LCS index arrays a and b
+   while (readSTRef il >>= \x -> return (x > (-1))) $ do -- get index of current snake, check for termination
     i <- readSTRef il
-    (p,x,y,l) <- MU.unsafeRead v i
-    when (l>0) $ do
+    -- read the snake values at index i
+    -- p => index of previous node in snake array. (x,y) => starting point of current snake. l => length of snake
+    (p,x,y,l) <- MU.unsafeRead v i 
+    when (l>0) $ do -- if snake length > 0, match was found - fill up index arrays
       j <- readSTRef jl
       fill a (j-l) x l
       fill b (j-l) y l
-      modifySTRef jl (\_ -> j-l)
-    modifySTRef il (\_ -> p)
-      
+      modifySTRef jl (\_ -> j-l) -- l locations filled in LCS indices - adjust for next iteration
+    modifySTRef il (\_ -> p) -- set i to previous snake node
+
+-- Helper function for lcs     
 lcsh :: (U.Unbox a, Eq a) => Vector a -> Vector a -> Bool -> (Vector Int,Vector Int)
 lcsh a b flip = runST $ do
   let n = U.length a
       m = U.length b
       delta = m-n
       offset=n+1
+      deloff=m+1 -- array index location of diagonal at delta
   fp <- newVI1 (m+n+3) (-1) -- array of furthest points
   snodes <- newVI1 (m+n+3) (-1) -- array to keep track of snake nodes in each iteration
   snakesv <- newSnakes (m+n+1) -- array of snakes - how does that sound?
   p <- newSTRef 0 -- minimum number of deletions for a
   s <- newSTRef snakesv -- store reference to snakevector - we have to pass it around
-  while (MU.unsafeRead fp (delta+offset) >>= \x -> return $! (x<m))
+  while (MU.unsafeRead fp (deloff) >>= \x -> return $! (x<m))
     $ do 
       n <- readSTRef p
       s0 <- readSTRef s
@@ -156,14 +160,16 @@ lcsh a b flip = runST $ do
   -- length of LCS is n-p. p must be decremented by 1 first for correct value of p 
   lcslen <- (readSTRef p >>= \x -> return $ (U.length a)-(x-1)) 
   snakesv <- readSTRef s
-  a1 <- MU.new lcslen -- array to store LCS indices for a and b respectively
-  b1 <- MU.new lcslen
-  iter snakesv a1 b1 -- iterate through snake vector, and fill up a1,b1 with indices of match
-  a1 <- U.unsafeFreeze a1
-  b1 <- U.unsafeFreeze b1
-  if flip then return (b1,a1) -- maintain correct order when returning indices
-  else return (a1,b1)
-{-# INLINE lcsh #-}
+  -- arrays to store LCS indices for a and b respectively
+  ai <- MU.new lcslen 
+  bi <- MU.new lcslen
+  -- iterate through snake vector, and fill up ai,bi with indices of match
+  iter snakesv ai bi 
+  ai <- U.unsafeFreeze ai
+  bi <- U.unsafeFreeze bi
+  -- maintain correct order when returning indices
+  if flip then return (bi,ai) 
+  else return (ai,bi)
 
 -- Function to find longest common subsequence given unboxed vectors a and b
 -- It returns indices of LCS in a and b
