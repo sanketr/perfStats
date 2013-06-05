@@ -10,12 +10,13 @@ config :: Config
 config = defaultConfig  { cfgSamples = ljust 100 }
 
 a = U.fromList ['a'..'j'] :: Vector Char
-b = U.fromList ['a'..'k'] :: Vector Char
+b = U.fromList ['j'..'t'] :: Vector Char
 
 suite :: [Benchmark]
 suite = [
           bench "lcs 10" $ whnf (lcs a) b
         ]
+{-#SPECIALIZE lcs :: Vector Char -> Vector Char -> (Vector Int, Vector Int) #-}
 
 main :: IO()
 main = defaultMainWith config (return ()) suite

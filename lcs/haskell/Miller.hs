@@ -35,13 +35,13 @@ data Snakev s = S {-# UNPACK #-}!Int
                                 !(MVI4 s) 
 
 cmp :: (U.Unbox a, Eq a) => U.Vector a -> U.Vector a -> Int -> Int -> Int
-cmp a b i j = go a b 0 i j
+cmp a b i j = go 0 i j
                where
-                 go v1 v2 !len !i !j| (i<n) && (j<m) && ((unsafeIndex v1 i) == (unsafeIndex v2 j)) = go v1 v2 (len+1) (i+1) (j+1)
+                 n = U.length a
+                 m = U.length b
+                 go !len !i !j| (i<n) && (j<m) && ((unsafeIndex a i) == (unsafeIndex b j)) = go (len+1) (i+1) (j+1)
                                     | otherwise = len
-                   where
-                    n = U.length a
-                    m = U.length b
+{-#INLINABLE cmp #-}
 
 newVI1 :: Int -> Int -> ST s (MVI1 s)
 newVI1 n x = do 
@@ -97,9 +97,8 @@ gridWalk a b fp snodes snakesv !k cmp = do
 -- The function below executes ct times, and updates furthest point (fp), snake node indices in snake
 -- array (snodes), and inserts new snakes in snake array as they are found during furthest point search
 findSnakes :: (U.Unbox a, Eq a) => Vector a -> Vector a -> MVI1 s -> MVI1 s -> Snakev s -> Int -> Int -> (Vector a -> Vector a -> Int -> Int -> Int) -> (Int -> Int -> Int) -> ST s (Snakev s)
-findSnakes a b fp snodes snakesv !k !ct cmp op = do
-  U.foldM (\s x -> gridWalk a b fp snodes s (op k x) cmp) snakesv (U.fromList [0..ct-1])
-{-#INLINE findSnakes #-}
+findSnakes a b fp snodes snakesv !k !ct cmp op = U.foldM' (\s x -> gridWalk a b fp snodes s (op k x) cmp) snakesv (U.fromList [0..ct-1])
+{-#INLINABLE findSnakes #-}
 
 -- while tail-recursive loop courtesy of Gabriel Gonzalez
 -- see http://www.haskellforall.com/2012/01/haskell-for-c-programmers-for-loops.html
@@ -134,6 +133,7 @@ iter (S len v) a b = do
       fill b (j-l) y l
       modifySTRef jl (\_ -> j-l) -- l locations filled in LCS indices - adjust for next iteration
     modifySTRef il (\_ -> p) -- set i to previous snake node
+{-#INLINABLE iter #-}
 
 -- Helper function for lcs     
 lcsh :: (U.Unbox a, Eq a) => Vector a -> Vector a -> Bool -> (Vector Int,Vector Int)
@@ -170,12 +170,15 @@ lcsh a b flip = runST $ do
   -- maintain correct order when returning indices
   if flip then return (bi,ai) 
   else return (ai,bi)
+{-#INLINABLE lcsh #-}
 
 -- Function to find longest common subsequence given unboxed vectors a and b
 -- It returns indices of LCS in a and b
 lcs :: (U.Unbox a, Eq a) => Vector a -> Vector a -> (Vector Int,Vector Int)
 lcs a b | (U.length a > U.length b) = lcsh b a True
         | otherwise = lcsh a b False
+{-#INLINABLE lcs #-}
+
 {--
 config :: Config
 config = defaultConfig  { cfgSamples = ljust 100 }
