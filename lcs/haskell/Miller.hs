@@ -24,7 +24,7 @@ import Control.Monad.ST as ST
 import Control.Monad.Primitive (PrimState)
 import Control.Monad (when) 
 import GHC.Float.RealFracMethods (int2Float)
-import Data.STRef (newSTRef, modifySTRef, readSTRef)
+import Data.STRef (newSTRef, writeSTRef, readSTRef)
 import Data.Word
 --import Criterion.Main
 --import Criterion.Config
@@ -131,8 +131,8 @@ iter (S len v) a b = do
       j <- readSTRef jl
       fill a (j-l) x l
       fill b (j-l) y l
-      modifySTRef jl (\_ -> j-l) -- l locations filled in LCS indices - adjust for next iteration
-    modifySTRef il (\_ -> p) -- set i to previous snake node
+      writeSTRef jl (j-l) -- l locations filled in LCS indices - adjust for next iteration
+    writeSTRef il p -- set i to previous snake node
 {-#INLINABLE iter #-}
 
 -- Helper function for lcs     
@@ -155,8 +155,8 @@ lcsh a b flip = runST $ do
       s1 <- findSnakes a b fp snodes s0 (-n) (delta+n) cmp (+) -- vertical traversal
       s2 <- findSnakes a b fp snodes s1 (delta+n) n cmp (-) -- horizontal traversal
       s3 <- findSnakes a b fp snodes s2 delta 1 cmp (-) -- diagonal traversal
-      modifySTRef s (\_ -> s3) -- store the latest snakevec for next iteration
-      modifySTRef p (+1) -- increment p by 1
+      writeSTRef s s3 -- store the latest snakevec for next iteration
+      writeSTRef p (n+1) -- increment p by 1
   -- length of LCS is n-p. p must be decremented by 1 first for correct value of p 
   lcslen <- (readSTRef p >>= \x -> return $ (U.length a)-(x-1)) 
   snakesv <- readSTRef s
