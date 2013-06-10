@@ -34,9 +34,8 @@ findYP fp k offset = do
               else return y1
 {-#INLINE findYP #-}
 
-gridWalk :: Vector Int32 -> Vector Int32 -> MVI1 s -> Int -> ST s ()
-gridWalk a b fp k = do
-   let offset = 1+U.length a
+gridWalk :: Vector Int32 -> Vector Int32 -> MVI1 s -> Int -> Int -> ST s ()
+gridWalk a b fp k offset = do
    yp <- findYP fp k offset
    MU.unsafeWrite fp (k+offset) (yp + (cmp a b (yp-k) yp))
 {-#INLINE gridWalk #-}
@@ -44,10 +43,10 @@ gridWalk a b fp k = do
 -- As noted in the paper, we find furthest point given diagonal k, and current set of furthest points.
 -- The function below executes ct times, and updates furthest point (fp), snake node indices in snake
 -- array (snodes), and inserts new snakes in snake array as they are found during furthest point search
-findSnakes :: Vector Int32 -> Vector Int32 -> MVI1 s ->  Int -> Int -> (Int -> Int -> Int) -> ST s ()
-findSnakes a b fp k ct op = go 0
+findSnakes :: Vector Int32 -> Vector Int32 -> MVI1 s ->  Int -> Int -> Int -> (Int -> Int -> Int) -> ST s ()
+findSnakes a b fp k ct offset op = go 0
      where go x 
-            | x < ct = gridWalk a b fp (op k x) >> go (x+1)
+            | x < ct = gridWalk a b fp (op k x) offset >> go (x+1)
             | otherwise = return ()
 {-#INLINE findSnakes #-}
 
@@ -69,9 +68,9 @@ lcsh a b = runST $ do
       deloff=m+1 -- index location of diagonal at delta in "furthest point" array
   fp <- MU.replicate (m+n+3) (-1) -- array of furthest points
   p <- forMi (MU.unsafeRead fp deloff >>= \x -> return $ (x<m)) 
-     (\i -> findSnakes a b fp (-i) (delta+i) (+) >>
-       findSnakes a b fp (delta+i) i (-) >>
-       findSnakes a b fp delta 1 (-))  
+     (\i -> findSnakes a b fp (-i) (delta+i) offset (+) >>
+       findSnakes a b fp (delta+i) i offset (-) >>
+       findSnakes a b fp delta 1 offset (-))  
   return $ (U.length a)-(p-1)
 {-#INLINABLE lcsh #-}
 
