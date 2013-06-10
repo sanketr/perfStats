@@ -13,6 +13,8 @@ import Control.Monad.ST as ST
 import Control.Monad.Primitive (PrimState)
 import Control.Monad as CM (when,forM_)
 import Data.Int
+import Criterion.Main
+import Criterion.Config
 
 type MVI1 s  = MVector (PrimState (ST s)) Int
 
@@ -81,4 +83,16 @@ lcs a b | (U.length a > U.length b) = lcsh b a
         | otherwise = lcsh a b
 {-#INLINABLE lcs #-}
 
-main = print $ lcs (U.fromList [0..3999]) (U.fromList [3999..7999])
+config :: Config
+config = defaultConfig { cfgSamples = ljust 100 }
+
+a = U.fromList [0..9] :: Vector Int32
+b = U.fromList [9..19] :: Vector Int32
+
+suite :: [Benchmark]
+suite = [
+          bench "lcs 10" $ whnf (lcs a) b
+        ]
+
+main :: IO()
+main = defaultMainWith config (return ()) suite
