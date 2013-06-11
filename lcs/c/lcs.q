@@ -6,7 +6,8 @@
 //Example: lcs["ABCABA";"CABBA"]
 //In Miller-Myers diff algorithm, m>n - so, function flips arguments if this is not the case
 
-lcs:(`$":/home/saagrawa/scripts/perfStats/lcs/c/lcs") 2:(`lcs;2);
+if[null libpth:`$ -3 _ string first pth where count each key each pth:{(`$":",x,"/lcs.so")} each ":" vs getenv `LD_LIBRARY_PATH; 0N!"lcs.so not found in LD_LIBRARY_PATH...Aborting"; exit 1];
+lcs: libpth 2:(`lcs;2);
 
 //Wrapper to find mutations between two tables given s in sym column. c columns are used
 //for mutation check - for example, price and size columns have very good quality signal
