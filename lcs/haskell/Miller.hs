@@ -63,7 +63,7 @@ sizesnakev (S i _) = i
 -- See FB note below about why a growth factor lower than 2 is better
 -- https://github.com/facebook/folly/blob/master/folly/docs/FBVector.md
 append :: Snakev s -> (Int,Int,Int,Int) -> ST s (Snakev s)
-append (S i v) !x = do
+append (S i v) !x@(_,_,_,!_) = do
    if i < MU.length v then MU.unsafeWrite v i x >> return (S (i+1) v)
    else MU.unsafeGrow v (floor $ 1.5 * (int2Float $ MU.length v)) >>= (\y -> MU.unsafeWrite y i x >> return (S (i+1) y))
    

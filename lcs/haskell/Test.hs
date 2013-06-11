@@ -11,7 +11,7 @@ config :: Config
 config = defaultConfig  { cfgSamples = ljust 100 }
 
 a = U.fromList [0..9] :: Vector Word8
-b = U.fromList [0..10] :: Vector Word8
+b = U.fromList [9..19] :: Vector Word8
 
 suite :: [Benchmark]
 suite = [
