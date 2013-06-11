@@ -83,11 +83,12 @@ lcs a b | (U.length a > U.length b) = lcsh b a
         | otherwise = lcsh a b
 {-#INLINABLE lcs #-}
 
+{--
 config :: Config
-config = defaultConfig { cfgSamples = ljust 100 }
+config = defaultConfig { cfgSamples = ljust 50 }
 
-a = U.fromList [0..9] :: Vector Int32
-b = U.fromList [9..19] :: Vector Int32
+a = U.fromList [0..3999] :: Vector Int32
+b = U.fromList [3999..7999] :: Vector Int32
 
 suite :: [Benchmark]
 suite = [
@@ -96,3 +97,5 @@ suite = [
 
 main :: IO()
 main = defaultMainWith config (return ()) suite
+--}
+main = print $ lcs (U.fromList [0..3999]) (U.fromList [3999..7999])
